@@ -235,7 +235,7 @@ func (c *RemindController) GetQueue() {
 				if errEmail != nil {
 					println("SendEmail ERR:", errEmail.Error())
 					// fmt.Printf("value: %+v\n", value) // 打印
-					newQueue.Email = append(newQueue.Email, value)
+					newQueue.Email = append(newQueue.Email, value) // 添加到失败队列方便下次重试
 				}
 
 			}
@@ -244,22 +244,26 @@ func (c *RemindController) GetQueue() {
 		if len(infos.Phone) > 0 {
 			for _, value := range infos.Phone {
 
-				phone := utils.FormatMobile(value.UserCell) // 格式化手机格式
+				phone := value.UserCell
 
-				// // 如果有余额
-				// if value.UserBalance > 0 {
-
-				// }
-
-				age := fmt.Sprintf("%d", value.RemindYear)
-				smsTemplate := [4]string{"0", "1815541", "1815543", "1815721"}
-				//短信发送
-				errSms := utils.SendSMS(ctx, phone, smsTemplate[value.State], []string{value.RemindDay, value.Fullname, age})
-				if errSms != nil {
-					println("SendSMS ERR:", errSms.Error())
-					newQueue.Email = append(newQueue.Email, value)
+				// 如果有余额
+				if value.UserBalance > 0 {
+					phone = utils.FormatMobile(phone) // 格式化手机格式
+				} else {
+					phone = ""
 				}
 
+				// 判断是否有手机号
+				if phone != "" {
+					age := fmt.Sprintf("%d", value.RemindYear)
+					smsTemplate := [4]string{"0", "1815541", "1815543", "1815721"}
+					//短信发送
+					errSms := utils.SendSMS(ctx, phone, smsTemplate[value.State], []string{value.RemindDay, value.Fullname, age})
+					if errSms != nil {
+						println("SendSMS ERR:", errSms.Error())
+						newQueue.Phone = append(newQueue.Phone, value) // 添加到失败队列方便下次重试
+					}
+				}
 			}
 		}
 
