@@ -1,9 +1,13 @@
 package controllers
 
 import (
+	"fmt"
+	"os"
+	"path/filepath"
 	"tibiji-go/config"
 	"tibiji-go/models"
 	"tibiji-go/utils"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/kataras/iris/v12"
@@ -125,7 +129,7 @@ func (c *ContactController) Post() {
 	// fmt.Printf("变量类型type: %T, 变量的值value: %v\n", allData, allData)
 
 	// 调取创建用户模型 - 返回新插入数据的id
-	uid, err := c.Models.Create(allData)
+	cid, err := c.Models.Create(allData)
 	if err != nil {
 		if env != "" {
 			println("Models.Create Error: ", err.Error())
@@ -137,7 +141,7 @@ func (c *ContactController) Post() {
 	}
 
 	// 返回成功响应
-	ctx.JSON(iris.Map{"data": uid, "code": 0, "msg": ""})
+	ctx.JSON(iris.Map{"data": cid, "code": 0, "msg": ""})
 }
 
 // 修改联系人  PUT:/contact/{cid}
@@ -238,4 +242,125 @@ func (c *ContactController) GetGroups() {
 		return
 	}
 	ctx.JSON(iris.Map{"data": row, "code": 0, "msg": ""})
+}
+
+// 导入VCF POST:/contact/vcards
+/*
+导出 vCard
+在 iCloud.com 上的“通讯录”中，点按以选择联系人列表中的所需联系人。如果你要导出多个联系人，请按住 Command 键（Mac 电脑上）或 Ctrl 键（Windows 电脑上），然后点按你要导出的每个联系人。
+点按边栏中的 “显示操作菜单”弹出式按钮，然后选取“导出 vCard”。
+如果你选择多个联系人，“通讯录”会导出一个包含所有联系人的 vCard。
+*/
+func (c *ContactController) PostVcards() {
+	ctx := c.CTX
+	env := ctx.Values().GetString("ENV")
+	tkUid, _ := ctx.Values().GetInt64("UID")
+	if env != "" {
+		// 打印模块名
+		println("\r\n\r\n", env, tkUid)
+		println("---------------------------------------------------------")
+		println(ctx.GetCurrentRoute().MainHandlerName() + " [" + ctx.GetCurrentRoute().Path() + "] " + ctx.Method())
+		println("---------------------------------------------------------")
+	}
+
+	// 获取配置项
+	otherCfg := ctx.Application().ConfigurationReadOnly().GetOther()
+	upPath := otherCfg["UPLOAD_PATH"].(string)   // 上传目录
+	upField := otherCfg["UPLOAD_FIELD"].(string) // 表单名字段名
+	println("upPath:", upPath)
+	println("upField:", upField)
+
+	// Get the max post value size passed via iris.WithPostMaxMemory.
+	maxSize := ctx.Application().ConfigurationReadOnly().GetPostMaxMemory()
+	// println("maxSize", maxSize)
+	err := ctx.Request().ParseMultipartForm(maxSize)
+	if err != nil {
+		// ctx.StopWithError(iris.StatusInternalServerError, err)
+		ctx.JSON(iris.Map{"code": config.ErrParamEmpty, "msg": config.ErrMsgs[config.ErrParamEmpty]})
+		return
+	}
+
+	form := ctx.Request().MultipartForm
+
+	fmt.Printf("form=> %T = %v", form, form)
+	println()
+
+	// <input type="file" name="upfile" size="30" accept="audio/*,video/*,image/*" capture="camera" multiple>
+	files := form.File[upField]
+	num := len(files)
+	if num == 0 {
+		files = form.File[upField+"[]"]
+		num = len(files)
+	}
+
+	// 如果文件数依旧为0
+	if num == 0 {
+		// ctx.StopWithError(iris.StatusInternalServerError, err)
+		ctx.JSON(iris.Map{"code": config.ErrParamEmpty, "msg": "请使用 name=upfile 做为file字段名"})
+		return
+	}
+
+	println("您上传的文件个数：", len(files))
+	thePath := AssetsPath + upPath
+
+	// 判断文件是否存在 - 检查主目录是否存在，如果不存在则创建目录
+	if _, err := os.Stat(thePath); os.IsNotExist(err) {
+		os.MkdirAll(thePath, os.ModePerm) // 自动创建文件夹
+	}
+
+	// 生成年月的子目件夹
+	folderName := upPath + "/" + time.Now().Format("20060102") + "/"
+
+	theFolderName := AssetsPath + folderName // 真实地址
+	// 检查子目录是否存在，如果不存在则创建目录
+	if _, err := os.Stat(theFolderName); os.IsNotExist(err) {
+		os.MkdirAll(theFolderName, os.ModePerm) // 自动创建文件夹
+	}
+
+	failures := ""
+	okList := []string{}
+	status := map[string]int{
+		"total":   0,
+		"success": 0,
+	}
+	for _, file := range files {
+		// 获取后缀名
+		ext := filepath.Ext(file.Filename)
+		// 生成新的文件名
+		newFilename := utils.GenerateTimerID(88888) + ext // 五位随机数据最大到5个8
+
+		// println(failures, ":::=>", theFolderName+newFilename)
+		_, err = ctx.SaveFormFile(file, theFolderName+newFilename)
+		if err != nil {
+			failures += file.Filename + "，"
+		}
+		okList = append(okList, folderName+newFilename) // 输出虚拟地址
+
+		// 解析联系人数据
+		data := utils.ParseVCards(theFolderName + newFilename)
+		// fmt.Printf("变量类型type: %T, 变量的值value: %v\n", data, data)
+
+		// 入库操作
+		for _, val := range data {
+			status["total"] += 1
+			// 添加用户ID
+			val["uid"] = tkUid
+			// 调取创建用户模型 - 返回新插入数据的id
+			cid, _ := c.Models.Create(val)
+			// println()
+			// println(" ------------- ", cid)
+			// println("入库操作")
+			if cid > 0 {
+				status["success"] += 1
+			}
+			// fmt.Println(val)
+
+		}
+	}
+	// errTXT := ""
+	// if failures != "" {
+	// 	errTXT = "有" + failures + "这些文件上传失败"
+	// }
+	ctx.JSON(iris.Map{"data": status, "code": 0, "msg": okList})
+
 }

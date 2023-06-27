@@ -77,8 +77,9 @@ func (m *ContactModel) Create(data map[string]interface{}) (int64, error) {
 
 	// 构建数据库的SQL语句
 	sql := fmt.Sprintf("INSERT INTO `%s` (%s) VALUES (%s)", m.TableName, strings.Join(fields, ","), strings.Join(values, ","))
-	println("\r\n", sql)                            // 打印sql
-	fmt.Printf("Type: %T , Data: %v\n", args, args) // 打印 args 映射的内容
+	// println("\r\n", sql)                            // 打印sql
+	// fmt.Printf("Type: %T , Data: %v\n", args, args) // 打印 args 映射的内容
+	// utils.PrintExtSql(sql, args) // 打印最终执行的SQL语句
 
 	// 执行数据库的操作
 	database, err := m.DB.NamedExec(sql, args)

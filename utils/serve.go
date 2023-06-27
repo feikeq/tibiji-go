@@ -3,13 +3,19 @@
 package utils
 
 import (
+	"encoding/base64"
 	"fmt"
+	"io"
 	"math/rand"
+	"mime/quotedprintable"
+	"os"
+	"path"
 	"regexp"
 	"strconv"
 	"strings"
 	"time"
 
+	"github.com/emersion/go-vcard"
 	"github.com/kataras/iris/v12"
 	"github.com/teris-io/shortid"
 )
@@ -419,4 +425,460 @@ func GenerateShortId() string {
 		panic(err)
 	}
 	return id
+}
+
+// 从文件中读取解析VCard数据
+func ParseVCards(vcfName string) []map[string]interface{} {
+	// 安装库 go get github.com/emersion/go-vcard
+	// 打开VCard文件 只能解析 只能解析 VCARD VERSION:3.0 的数据文件
+	file, err := os.Open(vcfName)
+	if err != nil {
+		panic(err)
+	}
+	defer file.Close()
+
+	// 获取属性
+	getType := func(name string, params map[string][]string) string {
+		keyStr := ""
+
+		if len(params[name]) > 0 {
+			// fmt.Println("-- 获取属性 --", params[name])
+
+			// 先找查是否包含 HOME 、 WORK 、 OTHER 标签
+			for _, tag := range params[name] {
+				if tag == "HOME" {
+					keyStr = "HOME"
+					break
+				} else if tag == "WORK" {
+					keyStr = "WORK"
+					break
+				} else if tag == "OTHER" {
+					keyStr = "OTHER"
+					break
+				}
+			}
+
+			// 如果不是上面三种标签则按以下规则获取
+			if keyStr == "" {
+				// 长度大于1的最第二个数据
+				if len(params[name]) > 1 && params[name][1] != "" && params[name][1] != "pref" {
+					keyStr = params[name][1]
+				} else if params[name][0] != "" && params[name][0] != "pref" {
+					// 长度小于1的最第一个数据
+					keyStr = params[name][0]
+				}
+			}
+		}
+		return keyStr
+	}
+
+	// Quoted-Printable编码转换
+	quotedPrintableToStr := func(str string) string {
+		// println(str)
+		//将字符串转换为读取器
+		r := strings.NewReader(str)
+
+		// 创建一个新的 Quoted-Printable 解码器
+		qp := quotedprintable.NewReader(r)
+
+		// 读取解码后的数据
+		decodedBytes, err := io.ReadAll(qp)
+		if err != nil {
+			// panic(err)
+			return ""
+		}
+
+		// 将解码后的字节转换为正常字符串
+		return string(decodedBytes)
+	}
+
+	var list []map[string]interface{}
+	list = make([]map[string]interface{}, 0) // 使用 make 函数创建了一个空的切片，并将其赋值给 list 变量
+
+	// 从文件中读取VCard数据
+	dec := vcard.NewDecoder(file)
+
+	// 解析单个联系人的 vCard 文件
+	// card, err := dec.Decode()
+	// if err != nil {
+	// 	panic(err)
+	// }
+
+	// 解析包含多个联系人的 vCard 文件
+	// https://github.com/ProtonMail/go-vcard
+	for {
+		println()
+		println("---------------------------------------------------------")
+		println("---- 解析包含多个联系人的 vCard 文件 ----")
+		println("---------------------------------------------------------")
+		println()
+		card, err := dec.Decode()
+		if err == io.EOF {
+			println(".............到达文件尾了")
+			break
+		} else if err != nil {
+			//  vCard 文件 结尾处不回车而是有空格或别的什么导致Decode解析错误
+			println(".............ERR", err.Error())
+			// panic(err)
+		} else {
+
+			// 打印VCard内容
+			// fmt.Println(card)
+
+			// // A Card is an address book entry.
+			// type Card map[string][]*Field
+
+			fmt.Println(card.PreferredValue(vcard.FieldFormattedName))
+
+			data := map[string]interface{}{
+				"state": 1,
+			}
+
+			/*
+				data := []string{} 和 data := make([]string, 0) 的效果是一样的，都是创建了一个空的字符串切片。
+				不同之处在于，data := []string{} 是使用了字符串切片的字面量语法来创建切片，而 data := make([]string, 0) 则是使用了 make 函数来创建切片。在实际开发中，通常建议使用 make 函数来创建切片，因为它可以指定切片的长度和容量，而且可以避免一些潜在的问题。
+				如果你使用 data := []string{} 来创建一个空的字符串切片，并且在后续的代码中向其中添加元素，那么在添加元素时可能会发生运行时错误，因为这个切片的长度为 0，而你却试图在一个不存在的位置上添加元素。而使用 make 函数创建切片时，可以指定切片的长度和容量，从而避免这个问题。
+				建议在实际开发中使用 make 函数来创建切片。例如，可以使用以下代码来创建一个长度为 0 的字符串切片：
+			*/
+
+			// 遍历资料
+			for key, val := range card {
+
+				// fmt.Printf("变量类型type: %T, 变量的值value: %v\n", val, val) // []*vcard.Field
+				// 变量类型type: []*vcard.Field, 变量的值value: [0xc0004b7140 0xc0004b71d0 0xc0004b7230]
+
+				/*
+					// 演示获取数据
+					{
+						println()
+						fmt.Println("----------", key, "----------")
+						for _, v := range val {
+							fmt.Printf("变量类型type: %T, 变量的值value: %v\n", v, v) // *vcard.Field
+							fmt.Println("v.Params.Types", v.Params.Types())   // [internet home pref]
+
+							keyStr := key
+							valStr := v.Value
+
+							// 遇到 VCARD VERSION:2.1 的怎么解析呢
+							// =E6=B9=98=E4=B8=AD=E5=A4=A7=E9=81=93=E5=90=9B=E4=B8=B4
+							fmt.Println("v.Params", v.Params)             // [CHARSET:[UTF-8] ENCODING:[QUOTED-PRINTABLE]]
+							fmt.Println("ENCODING", v.Params["ENCODING"]) // [CHARSET:[UTF-8] ENCODING:[QUOTED-PRINTABLE]]
+							// isQP 字符编码方式是Quoted-Printable编码。可以使用标准库中的"mime/quotedprintable"包来解码这种编码方式。
+							if len(v.Params["ENCODING"]) > 0 && v.Params["ENCODING"][0] == "QUOTED-PRINTABLE" {
+								valStr = quotedPrintableToStr(v.Value)
+							}
+
+							// // A field contains a value and some parameters.
+							// type Field struct {
+							// 	Value  string
+							// 	Params Params
+							// 	Group  string
+							// }
+
+							println("Value  string = ", valStr)
+							fmt.Println("Params map[string][]string = ", v.Params)
+							println("Group  string = ", v.Group)
+
+							// 如果没取到值说明值可能在 v.Params 里 (兼容 VCARD VERSION:2.1 )
+							if v.Value == "" {
+								// println("==== 如果没取到值说明值可能在 v.Params 里 (兼容 VCARD VERSION:2.1 ) ====")
+								for pk, pv := range v.Params {
+									// println(pk, ":", pv) // CELL : [1/1]0xc000225c50
+									keyStr += "_" + pk
+									valStr = pv[0] // 取第一个值
+								}
+
+							} else {
+
+								if len(v.Params["X-SERVICE-TYPE"]) > 0 {
+									keyStr += "_" + v.Params["X-SERVICE-TYPE"][0]
+								} else if len(v.Params["TYPE"]) > 0 {
+									if len(v.Params["TYPE"]) > 1 && v.Params["TYPE"][1] != "" && v.Params["TYPE"][1] != "pref" {
+										keyStr += "_" + v.Params["TYPE"][1]
+									} else if v.Params["TYPE"][0] != "" && v.Params["TYPE"][0] != "pref" {
+										keyStr += "_" + v.Params["TYPE"][0]
+									}
+								}
+
+							}
+
+							xApple := strings.Split(valStr, "x-apple:") // IMPP的值进行分割字符串 x-apple:
+							tmp_val := strings.Join(xApple, "")         // 拼接字符串
+							vals := strings.Split(tmp_val, ";")         // 分割字符串
+							// valStr = strings.Join(vals, " ")             // 拼接字符串
+
+							// 翻转数组 倒序排列 拼接字符串
+							valStr = ""
+							for i := len(vals) - 1; i >= 0; i-- {
+								if vals[i] != "" {
+									valStr += vals[i] + " "
+								}
+							}
+
+							println(keyStr, valStr)
+							println()
+
+						}
+						println()
+					}
+				*/
+
+				// println("----------", key, "----------")
+				switch key {
+				case "TEL":
+					tmp_arr := make([]string, 0) // tmp_arr := []string{}
+					for _, v := range val {
+						if len(v.Params["ENCODING"]) > 0 && v.Params["ENCODING"][0] == "QUOTED-PRINTABLE" {
+							v.Value = quotedPrintableToStr(v.Value)
+						}
+						keyStr := getType("TYPE", v.Params)
+						if v.Value == "" {
+							for pk, pv := range v.Params {
+								keyStr = key + "_" + strings.ToUpper(pk)
+								v.Value = pv[0]
+							}
+						} else {
+							if keyStr == "" {
+								keyStr = key
+							} else {
+								keyStr = key + "_" + strings.ToUpper(keyStr)
+							}
+						}
+						valStr := FormatMobile(v.Value)
+						tmp_arr = append(tmp_arr, keyStr+"::"+valStr)
+					}
+					data["phone"] = strings.Join(tmp_arr, "||")
+
+				case "NOTE":
+					for _, v := range val {
+						if len(v.Params["ENCODING"]) > 0 && v.Params["ENCODING"][0] == "QUOTED-PRINTABLE" {
+							v.Value = quotedPrintableToStr(v.Value)
+						}
+						data["note"] = v.Value
+					}
+
+				case "ADR":
+					tmp_arr := make([]string, 0) // tmp_arr := []string{}
+					for _, v := range val {
+						if len(v.Params["ENCODING"]) > 0 && v.Params["ENCODING"][0] == "QUOTED-PRINTABLE" {
+							v.Value = quotedPrintableToStr(v.Value)
+						}
+						keyStr := getType("TYPE", v.Params)
+						if v.Value == "" {
+							for pk, pv := range v.Params {
+								keyStr = key + "_" + strings.ToUpper(pk)
+								v.Value = pv[0]
+							}
+						} else {
+							if keyStr == "" {
+								keyStr = key
+							} else {
+								keyStr = key + "_" + strings.ToUpper(keyStr)
+							}
+						}
+						valStr := ""
+						vals := strings.Split(v.Value, ";")
+						for i := len(vals) - 1; i >= 0; i-- {
+							if vals[i] != "" {
+								valStr += vals[i] + " "
+							}
+						}
+						tmp_arr = append(tmp_arr, keyStr+"::"+valStr)
+					}
+					data["address"] = strings.Join(tmp_arr, "||")
+
+				case "X-SOCIALPROFILE":
+					tmp_arr := make([]string, 0) // tmp_arr := []string{}
+					for _, v := range val {
+						if len(v.Params["ENCODING"]) > 0 && v.Params["ENCODING"][0] == "QUOTED-PRINTABLE" {
+							v.Value = quotedPrintableToStr(v.Value)
+						}
+						keyStr := getType("TYPE", v.Params)
+						if v.Value == "" {
+							for pk, pv := range v.Params {
+								keyStr = key + "_" + strings.ToUpper(pk)
+								v.Value = pv[0]
+							}
+						} else {
+							if keyStr == "" {
+								keyStr = key
+							} else {
+								keyStr = key + "_" + strings.ToUpper(keyStr)
+							}
+						}
+						// valStr := v.Value // x-apple:1123456789
+						tmp_xApple := strings.Split(v.Value, "x-apple:")
+						valStr := strings.Join(tmp_xApple, "")
+						tmp_arr = append(tmp_arr, keyStr+"::"+valStr)
+					}
+					data["im_bak"] = strings.Join(tmp_arr, "||")
+				case "IMPP":
+					tmp_arr := make([]string, 0) // tmp_arr := []string{}
+					for _, v := range val {
+						if len(v.Params["ENCODING"]) > 0 && v.Params["ENCODING"][0] == "QUOTED-PRINTABLE" {
+							v.Value = quotedPrintableToStr(v.Value)
+						}
+						keyStr := getType("X-SERVICE-TYPE", v.Params)
+						if v.Value == "" {
+							for pk, pv := range v.Params {
+								keyStr = key + "_" + strings.ToUpper(pk)
+								v.Value = pv[0]
+							}
+						} else {
+							if keyStr == "" {
+								keyStr = key
+							} else {
+								keyStr = key + "_" + strings.ToUpper(keyStr)
+							}
+						}
+
+						// valStr := v.Value // x-apple:1123456789
+						tmp_xApple := strings.Split(v.Value, "x-apple:")
+						valStr := strings.Join(tmp_xApple, "")
+						tmp_arr = append(tmp_arr, keyStr+"::"+valStr)
+					}
+					data["im"] = strings.Join(tmp_arr, "||")
+
+				case "ORG":
+					for _, v := range val {
+						if len(v.Params["ENCODING"]) > 0 && v.Params["ENCODING"][0] == "QUOTED-PRINTABLE" {
+							v.Value = quotedPrintableToStr(v.Value)
+						}
+						vals := strings.Split(v.Value, ";")
+						if len(vals) > 1 {
+							data["company"] = vals[0]
+							data["position"] = vals[1]
+						}
+						data["position"] = vals[0]
+					}
+
+				case "N": //"FN":
+					for _, v := range val {
+						if len(v.Params["ENCODING"]) > 0 && v.Params["ENCODING"][0] == "QUOTED-PRINTABLE" {
+							v.Value = quotedPrintableToStr(v.Value)
+						}
+						vals := strings.Split(v.Value, ";")
+						data["fullname"] = strings.Join(vals, "")
+					}
+
+				case "EMAIL":
+					tmp_arr := make([]string, 0) // tmp_arr := []string{}
+					for _, v := range val {
+						if len(v.Params["ENCODING"]) > 0 && v.Params["ENCODING"][0] == "QUOTED-PRINTABLE" {
+							v.Value = quotedPrintableToStr(v.Value)
+						}
+						keyStr := getType("TYPE", v.Params)
+						if v.Value == "" {
+							for pk, pv := range v.Params {
+								keyStr = key + "_" + strings.ToUpper(pk)
+								v.Value = pv[0]
+							}
+						} else {
+							if keyStr == "" {
+								keyStr = key
+							} else {
+								keyStr = key + "_" + strings.ToUpper(keyStr)
+							}
+						}
+						valStr := v.Value
+						tmp_arr = append(tmp_arr, keyStr+"::"+valStr)
+					}
+					data["mail"] = strings.Join(tmp_arr, "||")
+
+				case "URL":
+					tmp_arr := make([]string, 0) // tmp_arr := []string{}
+					for _, v := range val {
+						if len(v.Params["ENCODING"]) > 0 && v.Params["ENCODING"][0] == "QUOTED-PRINTABLE" {
+							v.Value = quotedPrintableToStr(v.Value)
+						}
+						keyStr := getType("TYPE", v.Params)
+						if v.Value == "" {
+							for pk, pv := range v.Params {
+								keyStr = key + "_" + strings.ToUpper(pk)
+								v.Value = pv[0]
+							}
+						} else {
+							if keyStr == "" {
+								keyStr = key
+							} else {
+								keyStr = key + "_" + strings.ToUpper(keyStr)
+							}
+						}
+						valStr := v.Value
+						tmp_arr = append(tmp_arr, keyStr+"::"+valStr)
+					}
+					data["http"] = strings.Join(tmp_arr, "||")
+
+				case "PHOTO":
+					imgPath := ""
+					for _, v := range val {
+						// println(" ---  base64.StdEncoding.DecodeString --- ")
+						ext := strings.ToLower(getType("TYPE", v.Params)) // 转小写
+
+						// 如果遇到 VCARD VERSION:2.1
+						if v.Value == "" {
+							ext = "jpg"
+							v.Value = getType("JPEG", v.Params)
+						}
+						// println(v.Value)
+						// println("ext:", ext)
+
+						// 将base64编码的图像转换为二进制数据
+						imgData, err := base64.StdEncoding.DecodeString(v.Value)
+						if err != nil {
+							panic(err)
+						}
+
+						// 有内容才做以下操作
+						if len(v.Value) > 0 {
+							// 创建并保存图像文件
+							imgPath = path.Dir(vcfName) + "/" + GenerateTimerID(9999) + "." + ext
+							// println("imgPath",imgPath)
+							file, err := os.Create(imgPath)
+							if err != nil {
+								panic(err)
+							}
+							defer file.Close()
+							// 写入文件
+							_, err = file.Write(imgData)
+							if err != nil {
+								panic(err)
+							}
+						}
+
+					}
+					data["picture"] = imgPath
+
+				case "X-ALTBDAY":
+					for _, v := range val {
+						data["lunar"] = v.Value
+					}
+				case "BDAY":
+					for _, v := range val {
+						data["birthday"] = v.Value
+					}
+				default:
+					// println("--- 处理其他类型 ---")
+				}
+
+			}
+
+			// 判断是否存在字段 "im_bak"
+			if _, ok := data["im_bak"]; ok {
+				data["im"] = data["im"].(string) + "||" + data["im_bak"].(string)
+			}
+
+			// 判断是否存在字段 "lunar"
+			if _, ok := data["lunar"]; ok {
+				data["lunar"] = 1
+				thetime, _ := time.Parse("2006-01-02", data["birthday"].(string))
+				_, data["birthday"] = DateToLunar(thetime) // 公历转农历(阳历转阴历)
+			}
+
+			list = append(list, data)
+		} // end if
+
+	} // end for
+
+	return list
 }

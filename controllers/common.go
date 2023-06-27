@@ -16,7 +16,10 @@ import (
 // 全局变量必须以关键字var开头，然后是变量名和类型。
 var AssetsPath string = "./assets" // 资源文件夹
 
+// CommonController 其它通用控制器 - 不需要模型简单赋值调用
+// 定义一个结构体
 type CommonController struct {
+	// DB *sqlx.DB // 控制器 func (c *CommonController) 里使用c.DB访问数据库连接
 }
 
 // 上传文件 POST:/common/upload

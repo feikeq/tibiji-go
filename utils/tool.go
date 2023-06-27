@@ -456,6 +456,33 @@ func InArray(arr []string, num int) bool {
 	return false
 }
 
+// 打印最终执行的SQL语句 - 打印最终执行的SQL语句和参数
+// utils.PrintExtSql(sql, args)
+func PrintExtSql(sql string, args map[string]interface{}) {
+	println()
+	println()
+	println()
+
+	for key, val := range args {
+		println(key)
+
+		// 断言类型 - 使用一个switch语句来检查每个值的类型进行类型断言
+		switch inviter := val.(type) {
+		case string:
+			sql = strings.ReplaceAll(sql, ":"+key, "'"+inviter+"'")
+		default:
+			str := fmt.Sprint(inviter)
+			sql = strings.ReplaceAll(sql, ":"+key, str)
+		}
+
+	}
+	println(sql)
+
+	println()
+	println()
+	println()
+}
+
 // SerializeJSON 序列化结构体为JSON字符串
 func SerializeJSON(data interface{}) (string, error) {
 	bytes, err := json.Marshal(data)

@@ -6,6 +6,9 @@
 [![go-pinyin](https://img.shields.io/badge/go%20pinyin-v0.20.0-green)](https://github.com/mozillazg/go-pinyin)
 [![Tencent Cloud SDK for Go](https://img.shields.io/badge/tencentcloud%20sdk%20go-v1.0.667-green)](https://github.com/tencentcloud/tencentcloud-sdk-go/)
 [![Generator of unique non-sequential short Ids](https://img.shields.io/badge/shortid-v0.0.0-green)](https://github.com/teris-io/shortid)
+[![go-vcard](https://img.shields.io/badge/go%20vcard-v0.3.0-green)](https://github.com/emersion/go-vcard)
+
+
 
 ![TiBiJ image](https://www.tibiji.com/web/images/logo.png)
 
@@ -25,6 +28,7 @@
 4. 集成微信SDK和腾讯云短信也可采用smtp发送邮件通知
 5. 集合农历库能对阴历生日进行有效计算
 6. 集合中文拼音功能让检索数据更加方便
+7. 支持手机通讯录vCard文件导入至联系人
 
 
 ## ⚙️ 项目配置

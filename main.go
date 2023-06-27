@@ -308,8 +308,7 @@ func main() {
 		notepadController := controllers.NewNotepadController(db)
 
 		// 通过赋值了一个xxxxController实例，直接创建实例并手动传入 DB 对象
-		commonController := &controllers.CommonController{}
-		conciseController := &controllers.ConciseController{DB: db} // 不需要模型简单赋值调用
+		commonController := &controllers.CommonController{} // 不需要模型简单赋值调用（当然也可以传值进去像 CommonController{DB: db} ）
 
 		// 使用MVC模式组织路由和控制器
 
@@ -337,8 +336,6 @@ func main() {
 		// }
 		mvc.New(app.Party("/common")).Handle(commonController) // 通用功能
 		mvc.New(app.Party("/oauth")).Handle(oauthController)   // 平台接入
-
-		mvc.New(app.Party("/concise")).Handle(conciseController)
 		mvc.New(app.Party("/account")).Handle(accountController)
 		mvc.New(app.Party("/contact")).Handle(contactController)
 		mvc.New(app.Party("/humane")).Handle(humaneController)
