@@ -337,7 +337,7 @@ func (c *ContactController) PostVcards() {
 		okList = append(okList, folderName+newFilename) // 输出虚拟地址
 
 		// 解析联系人数据
-		data := utils.ParseVCards(theFolderName + newFilename)
+		data := utils.ParseVCards(theFolderName+newFilename, AssetsPath)
 		// fmt.Printf("变量类型type: %T, 变量的值value: %v\n", data, data)
 
 		// 入库操作

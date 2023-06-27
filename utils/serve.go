@@ -428,7 +428,7 @@ func GenerateShortId() string {
 }
 
 // 从文件中读取解析VCard数据
-func ParseVCards(vcfName string) []map[string]interface{} {
+func ParseVCards(vcfName, assetsPath string) []map[string]interface{} {
 	// 安装库 go get github.com/emersion/go-vcard
 	// 打开VCard文件 只能解析 只能解析 VCARD VERSION:3.0 的数据文件
 	file, err := os.Open(vcfName)
@@ -810,6 +810,7 @@ func ParseVCards(vcfName string) []map[string]interface{} {
 					data["http"] = strings.Join(tmp_arr, "||")
 
 				case "PHOTO":
+					picPath := ""
 					imgPath := ""
 					for _, v := range val {
 						// println(" ---  base64.StdEncoding.DecodeString --- ")
@@ -832,9 +833,13 @@ func ParseVCards(vcfName string) []map[string]interface{} {
 						// 有内容才做以下操作
 						if len(v.Value) > 0 {
 							// 创建并保存图像文件
-							imgPath = path.Dir(vcfName) + "/" + GenerateTimerID(9999) + "." + ext
-							// println("imgPath",imgPath)
-							file, err := os.Create(imgPath)
+							picPath = path.Dir(vcfName) + "/" + GenerateTimerID(9999) + "." + ext
+							imgPath = strings.TrimPrefix(picPath, path.Dir(assetsPath+"/"))
+
+							println("picPath", picPath)
+							println(assetsPath, "imgPath", imgPath)
+
+							file, err := os.Create(picPath)
 							if err != nil {
 								panic(err)
 							}
