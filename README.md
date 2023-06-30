@@ -74,9 +74,15 @@ set TIBIJI_SERV_ENV=development
 
 ## 🚀 启动服务
 ```sh
-go run main.go    
+go run main.go
 ```
 
+## 🛰 编译部署
+不使用 go build 而使用名为build.sh的Shell脚本来进行编译
+```sh
+chmod +x build.sh
+./build.sh
+```
 
 
 ## 🐬 数据割接
