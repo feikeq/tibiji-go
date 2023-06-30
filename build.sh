@@ -17,5 +17,4 @@ rm ./dist/config/*.go
 
 # 编译项目 并 指定输出文件的路径和名称
 go build -o ./dist/ .
-
-
+# go build -ldflags "-w -s -extldflags '-static'" -o ./dist/ . # 使用Go的静态编译。静态编译会将所有依赖库打包到可执行文件中，从而减小文件大小

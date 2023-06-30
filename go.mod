@@ -2,23 +2,18 @@ module tibiji-go
 
 go 1.19
 
-require github.com/go-sql-driver/mysql v1.7.1
+require (
+	github.com/6tail/lunar-go v1.3.3
+	github.com/emersion/go-vcard v0.0.0-20230331202150-f3d26859ccd3
+	github.com/go-sql-driver/mysql v1.7.1
+	github.com/mozillazg/go-pinyin v0.20.0
+	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.0.667
+	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/sms v1.0.667
+)
 
 require (
-	github.com/6tail/lunar-go v1.3.3 // indirect
-	github.com/CloudyKit/jet/v4 v4.1.0 // indirect
-	github.com/aymerick/raymond v2.0.3-0.20180322193309-b565731e1464+incompatible // indirect
-	github.com/emersion/go-vcard v0.0.0-20230331202150-f3d26859ccd3 // indirect
-	github.com/iris-contrib/jade v1.1.4 // indirect
-	github.com/iris-contrib/pongo2 v0.0.1 // indirect
-	github.com/json-iterator/go v1.1.12 // indirect
-	github.com/kataras/iris v0.0.2 // indirect
-	github.com/modern-go/concurrent v0.0.0-20180228061459-e0a39a4cb421 // indirect
-	github.com/modern-go/reflect2 v1.0.2 // indirect
-	github.com/mozillazg/go-pinyin v0.20.0 // indirect
-	github.com/ryanuber/columnize v2.1.0+incompatible // indirect
-	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/common v1.0.667 // indirect
-	github.com/tencentcloud/tencentcloud-sdk-go/tencentcloud/sms v1.0.667 // indirect
+	github.com/kr/pretty v0.1.0 // indirect
+	github.com/sergi/go-diff v1.1.0 // indirect
 )
 
 require (
@@ -46,7 +41,7 @@ require (
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/kataras/blocks v0.0.7 // indirect
 	github.com/kataras/golog v0.1.8 // indirect
-	github.com/kataras/iris/v12 v12.2.0 // indirect
+	github.com/kataras/iris/v12 v12.2.0
 	github.com/kataras/neffos v0.0.21 // indirect
 	github.com/kataras/pio v0.0.11 // indirect
 	github.com/kataras/sitemap v0.0.6 // indirect
@@ -62,7 +57,6 @@ require (
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/schollz/closestmatch v2.1.0+incompatible // indirect
 	github.com/sirupsen/logrus v1.8.1 // indirect
-	github.com/speps/go-hashids v2.0.0+incompatible
 	github.com/tdewolff/minify/v2 v2.12.4 // indirect
 	github.com/tdewolff/parse/v2 v2.6.4 // indirect
 	github.com/teris-io/shortid v0.0.0-20220617161101-71ec9f2aa569
