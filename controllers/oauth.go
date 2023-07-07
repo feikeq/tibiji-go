@@ -36,6 +36,65 @@ type WXCach struct {
 
 var wx = WXCach{} // 全局变量
 
+// 接入查询 GET:/oauth
+func (c *OauthController) Get() {
+	ctx := c.CTX
+	env := ctx.Values().GetString("ENV")
+	tkUid, _ := ctx.Values().GetInt64("UID")
+	if env != "" {
+		// 打印模块名
+		println("\r\n\r\n", env, tkUid)
+		println("---------------------------------------------------------")
+		println(ctx.GetCurrentRoute().MainHandlerName() + " [" + ctx.GetCurrentRoute().Path() + "] " + ctx.Method())
+		println("---------------------------------------------------------")
+	}
+
+	// 拿所有提交数据
+	allData := utils.AllDataToMap(ctx)
+
+	var platfrom, openid_unionid string
+
+	// 判断是否存在字段 "platfrom"
+	if _, ok := allData["platfrom"]; !ok {
+		println("外接平台名不能为空")
+		ctx.JSON(iris.Map{"code": config.ErrParamEmpty, "msg": config.ErrMsgs[config.ErrParamEmpty]})
+		return
+	} else {
+		if allData["platfrom"] == "" {
+			println("外接平台名不能为空")
+			ctx.JSON(iris.Map{"code": config.ErrParamEmpty, "msg": config.ErrMsgs[config.ErrParamEmpty]})
+			return
+		}
+		platfrom = allData["platfrom"].(string)
+	}
+	// 判断是否存在字段 "openid_unionid"
+	if _, ok := allData["openid_unionid"]; !ok {
+		println("外接平台身份ID或唯一标识不能为空")
+		ctx.JSON(iris.Map{"code": config.ErrParamEmpty, "msg": config.ErrMsgs[config.ErrParamEmpty]})
+		return
+	} else {
+		if allData["openid_unionid"] == "" {
+			println("外接平台身份ID或唯一标识不能为空")
+			ctx.JSON(iris.Map{"code": config.ErrParamEmpty, "msg": config.ErrMsgs[config.ErrParamEmpty]})
+			return
+		}
+		openid_unionid = allData["openid_unionid"].(string)
+	}
+	// println(platfrom, openid_unionid)
+	useroauth, err := c.Models.FindOAuthOpenid(platfrom, openid_unionid)
+	if err != nil {
+		if env != "" {
+			println("Models.FindOAuth Error: ", err.Error())
+			ctx.JSON(iris.Map{"data": allData, "code": "err debug", "msg": err.Error()})
+		} else {
+			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase]})
+		}
+		return
+	}
+
+	ctx.JSON(iris.Map{"data": useroauth, "code": 0, "msg": ""})
+}
+
 // 接入用户 POST:/oauth
 func (c *OauthController) Post() {
 	ctx := c.CTX
@@ -53,8 +112,43 @@ func (c *OauthController) Post() {
 	allData := utils.AllDataToMap(ctx)
 	// fmt.Printf("allData %T -> %v", allData, allData)
 
+	var platfrom, openid string
+
+	// 判断是否存在字段 "platfrom"
+	if _, ok := allData["platfrom"]; !ok {
+		println("外接平台名不能为空")
+		ctx.JSON(iris.Map{"code": config.ErrParamEmpty, "msg": config.ErrMsgs[config.ErrParamEmpty]})
+		return
+	} else {
+		if allData["platfrom"] == "" {
+			println("外接平台名不能为空")
+			ctx.JSON(iris.Map{"code": config.ErrParamEmpty, "msg": config.ErrMsgs[config.ErrParamEmpty]})
+			return
+		}
+		platfrom = allData["platfrom"].(string)
+	}
+
+	// 判断是否存在字段 "openid"
+	if _, ok := allData["openid"]; !ok {
+		println("外接平台名不能为空")
+		ctx.JSON(iris.Map{"code": config.ErrParamEmpty, "msg": config.ErrMsgs[config.ErrParamEmpty]})
+		return
+	} else {
+		if allData["openid"] == "" {
+			println("外接平台名不能为空")
+			ctx.JSON(iris.Map{"code": config.ErrParamEmpty, "msg": config.ErrMsgs[config.ErrParamEmpty]})
+			return
+		}
+		openid = allData["openid"].(string)
+	}
+
+	// 删除不能修改的字段
+	// delete(allData, "uid")    // 删除 用户ID
+	delete(allData, "uptime") // 删除 更新时间
+	allData["uid"] = tkUid
+
 	// 接入一个新的的第三方平台用户 - 返回新插入数据的id
-	id, err := c.Models.CreateOAuth(allData)
+	useroauth, err := c.Models.CreateOAuth(allData)
 	if err != nil {
 		if env != "" {
 			println("Models.CreateOAuth Error: ", err.Error())
@@ -65,11 +159,103 @@ func (c *OauthController) Post() {
 		return
 	}
 
-	// 返回成功响应
-	//向数据模板传值 当然也可以绑定其他值
-	// ctx.ViewData("", mapData)
-	// ctx.StatusCode(iris.StatusOK)
-	ctx.JSON(iris.Map{"data": id, "code": 0, "msg": ""})
+	// 如果已绑定用户返回
+	if useroauth.UID > 0 {
+
+		// 获取用户信息
+		user, err := c.Models.Read(useroauth.UID)
+		if err != nil {
+			if env != "" {
+				println("Models.Read Error: ", err.Error())
+				ctx.JSON(iris.Map{"data": allData, "code": "err debug", "msg": err.Error()})
+			} else {
+				ctx.JSON(iris.Map{"code": config.ErrNoRecords, "msg": config.ErrMsgs[config.ErrNoRecords]})
+			}
+			return
+		}
+
+		// 在控制器层将结果进行修改和脱敏并得到最终的数据
+		if *user.State == 2 {
+			if env != "" {
+				println("帐号还未激活")
+				ctx.JSON(iris.Map{"data": allData, "code": "err debug", "msg": "帐号还未激活"})
+			} else {
+				ctx.JSON(iris.Map{"code": config.ErrNoPermission, "msg": config.ErrMsgs[config.ErrNoPermission]})
+			}
+			return
+		} else if *user.State == 0 {
+			if env != "" {
+				println("帐号已被禁用")
+				ctx.JSON(iris.Map{"data": allData, "code": "err debug", "msg": "帐号已被禁用"})
+			} else {
+				ctx.JSON(iris.Map{"code": config.ErrUserDisabled, "msg": config.ErrMsgs[config.ErrUserDisabled]})
+			}
+			return
+		}
+
+		// 数据处理 - 转换时间格式
+		*user.Birthday = utils.RFC3339ToString(*user.Birthday, 0)
+		*user.Intime = utils.RFC3339ToString(*user.Intime, 2) //防止拿到秒级精确时间
+		*user.Uptime = utils.RFC3339ToString(*user.Uptime, 2) //防止拿到秒级精确时间
+		// 对手机号等敏感信息进行脱敏处理
+		*user.Cell = utils.MaskPhoneNumber(*user.Cell)
+		// 对邮箱进行脱敏处理
+		*user.Email = utils.MaskEmail(*user.Email)
+		// 对银行卡进行脱敏处理
+		*user.Bankcard = utils.MaskBankCardNumber(*user.Bankcard)
+		// 对身份证进行脱敏处理
+		*user.IdentityCard = utils.MaskIDCardNumber(*user.IdentityCard)
+		// 对真实姓名脱敏
+		*user.FName = utils.MaskRealName(*user.FName)
+
+		// // 对密码进行脱敏处理
+		// if user.Ciphers == "" {
+		// 	user.Ciphers = "0"
+		// } else {
+		// 	user.Ciphers = "1"
+		// }
+
+		result := utils.StructToMap(user, "json") // 结构体转MAP
+
+		// 对密码进行类型转换的脱敏处理
+		if result["ciphers"] != "" {
+			result["password"] = true
+		} else {
+			result["password"] = false
+		}
+		delete(result, "ciphers")
+
+		// 获取配置项
+		otherCfg := ctx.Application().ConfigurationReadOnly().GetOther()
+		ua := ctx.GetHeader("User-Agent") // 拿到UA信息User-Agent
+		exptime := otherCfg["SERV_EXPIRES_TIME"].(int64)
+		secret := otherCfg["SERV_KEY_SECRET"].(string) + ua
+		// 添加 token
+		token, _ := utils.GenerateToken(*user.UID, exptime, secret)
+		result["token"] = token
+
+		// 操盘写入日志表
+		logData := map[string]interface{}{
+			"uid":    *user.UID,
+			"action": platfrom,
+			"note":   openid,
+			"actip":  utils.GetRealIP(ctx),
+			"ua":     ua,
+		}
+		log := c.Models.SetLogs(logData)
+		if log != nil {
+			if env != "" {
+				println("Models.SetLogs Error: ", err.Error())
+				ctx.JSON(iris.Map{"data": logData, "code": "err debug", "msg": err.Error()})
+			}
+		}
+		// 返回登录状态
+		ctx.JSON(iris.Map{"data": result, "code": 0, "msg": ""})
+		return
+	}
+
+	// 返回开放平台数据
+	ctx.JSON(iris.Map{"data": useroauth, "code": 0, "msg": ""})
 }
 
 // 微信接入 - 网页授权任意请求类型访问 POST:/oauth/wx/{code}

@@ -118,12 +118,12 @@ func (c *AccountController) Post() {
 	// 判断是否存在字段 "money"
 	if _, ok := allData["money"]; !ok {
 		println("帐单金额不能为空")
-		ctx.JSON(iris.Map{"data": 0, "code": config.ErrParamEmpty, "msg": config.ErrMsgs[config.ErrParamEmpty]})
+		ctx.JSON(iris.Map{"code": config.ErrParamEmpty, "msg": config.ErrMsgs[config.ErrParamEmpty]})
 		return
 	} else {
 		if allData["money"] == "" {
 			println("帐单金额不能为空")
-			ctx.JSON(iris.Map{"data": 0, "code": config.ErrParamEmpty, "msg": config.ErrMsgs[config.ErrParamEmpty]})
+			ctx.JSON(iris.Map{"code": config.ErrParamEmpty, "msg": config.ErrMsgs[config.ErrParamEmpty]})
 			return
 		}
 	}
@@ -222,12 +222,12 @@ func (c *AccountController) GetMonth() {
 	// 判断是否存在字段 "year"
 	if _, ok := allData["year"]; !ok {
 		println("年份不能为空")
-		ctx.JSON(iris.Map{"data": 0, "code": config.ErrParamEmpty, "msg": config.ErrMsgs[config.ErrParamEmpty]})
+		ctx.JSON(iris.Map{"code": config.ErrParamEmpty, "msg": config.ErrMsgs[config.ErrParamEmpty]})
 		return
 	} else {
 		if allData["year"] == "" {
 			println("年份不能为空")
-			ctx.JSON(iris.Map{"data": 0, "code": config.ErrParamEmpty, "msg": config.ErrMsgs[config.ErrParamEmpty]})
+			ctx.JSON(iris.Map{"code": config.ErrParamEmpty, "msg": config.ErrMsgs[config.ErrParamEmpty]})
 			return
 		} else {
 			year = allData["year"].(string)
@@ -237,12 +237,12 @@ func (c *AccountController) GetMonth() {
 	// 判断是否存在字段 "month"
 	if _, ok := allData["month"]; !ok {
 		println("月份不能为空")
-		ctx.JSON(iris.Map{"data": 0, "code": config.ErrParamEmpty, "msg": config.ErrMsgs[config.ErrParamEmpty]})
+		ctx.JSON(iris.Map{"code": config.ErrParamEmpty, "msg": config.ErrMsgs[config.ErrParamEmpty]})
 		return
 	} else {
 		if allData["month"] == "" {
 			println("月份不能为空")
-			ctx.JSON(iris.Map{"data": 0, "code": config.ErrParamEmpty, "msg": config.ErrMsgs[config.ErrParamEmpty]})
+			ctx.JSON(iris.Map{"code": config.ErrParamEmpty, "msg": config.ErrMsgs[config.ErrParamEmpty]})
 			return
 		} else {
 			month = allData["month"].(string)

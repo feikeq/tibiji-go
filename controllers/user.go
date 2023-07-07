@@ -288,6 +288,10 @@ func (c *UserController) Get() {
 		List       []models.UserInfo `json:"list" description:"列表数据"`
 	}
 	data := temp{total, pageNumber, pageSize, pageOrder, pageField, list}
+	// 返回成功响应
+	// 向数据模板传值 当然也可以绑定其他值
+	// ctx.ViewData("", mapData)
+	// ctx.StatusCode(iris.StatusOK)
 	ctx.JSON(iris.Map{"data": data, "code": total, "msg": ""})
 }
 
