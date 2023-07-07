@@ -80,19 +80,18 @@ func (c *OauthController) Get() {
 		}
 		openid_unionid = allData["openid_unionid"].(string)
 	}
-	// println(platfrom, openid_unionid)
+
 	useroauth, err := c.Models.FindOAuthOpenid(platfrom, openid_unionid)
-	if err != nil {
-		if env != "" {
-			println("Models.FindOAuth Error: ", err.Error())
-			ctx.JSON(iris.Map{"data": allData, "code": "err debug", "msg": err.Error()})
-		} else {
-			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase]})
-		}
+	if err == nil {
+		ctx.JSON(iris.Map{"data": useroauth, "code": 0, "msg": ""})
 		return
 	}
 
+	// 如果找到 unionid 相符的用户
+	useroauth, _ = c.Models.FindOAuthUnionid(platfrom, openid_unionid)
+
 	ctx.JSON(iris.Map{"data": useroauth, "code": 0, "msg": ""})
+
 }
 
 // 接入用户 POST:/oauth
