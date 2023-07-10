@@ -271,6 +271,9 @@ func (c *OauthController) AllWxBy(code string) {
 		println("---------------------------------------------------------")
 	}
 
+	// 微信网页登录网页授权文档
+	// https://developers.weixin.qq.com/doc/offiaccount/OA_Web_Apps/Wechat_webpage_authorization.html
+
 	method := ctx.Method()
 
 	// 拿所有提交数据
