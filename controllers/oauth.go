@@ -3,6 +3,7 @@ package controllers
 import (
 	"encoding/json"
 	"fmt"
+	"net/url"
 	"tibiji-go/config"
 	"tibiji-go/models"
 	"tibiji-go/utils"
@@ -257,8 +258,8 @@ func (c *OauthController) Post() {
 	ctx.JSON(iris.Map{"data": useroauth, "code": 0, "msg": ""})
 }
 
-// 微信接入 - 网页授权任意请求类型访问 POST:/oauth/wx/{code}
-func (c *OauthController) PostWxBy(code string) {
+// 微信接入 - 网页授权任意请求类型访问 All:/oauth/wx/{code}
+func (c *OauthController) AllWxBy(code string) {
 	ctx := c.CTX
 	env := ctx.Values().GetString("ENV")
 	tkUid, _ := ctx.Values().GetInt64("UID")
@@ -269,6 +270,8 @@ func (c *OauthController) PostWxBy(code string) {
 		println(ctx.GetCurrentRoute().MainHandlerName() + " [" + ctx.GetCurrentRoute().Path() + "] " + ctx.Method())
 		println("---------------------------------------------------------")
 	}
+
+	method := ctx.Method()
 
 	// 拿所有提交数据
 	allData := utils.AllDataToMap(ctx)
@@ -291,6 +294,20 @@ func (c *OauthController) PostWxBy(code string) {
 	// 判断是否存在字段 "appid"
 	if _, ok := allData["appsecret"]; ok {
 		wx_appsecret = allData["appsecret"].(string)
+	}
+
+	if method == "GET" {
+		// 用户同意授权，获取code
+		println("ctx.Method()", method)
+		var wx_redirect_uri string
+		if _, ok := allData["redirect_uri"]; ok {
+			wx_redirect_uri = allData["redirect_uri"].(string)
+		}
+		// redirect_uri 授权后重定向的回调链接地址， 请使用 urlEncode 对链接进行处理
+		wx_redirect_uri = url.QueryEscape(wx_redirect_uri)
+		codeUrl := fmt.Sprintf("https://open.weixin.qq.com/connect/oauth2/authorize?appid=%s&redirect_uri=%s&response_type=code&scope=SCOPE&state=STATE#wechat_redirect", wx_appid, wx_redirect_uri)
+		ctx.JSON(iris.Map{"data": codeUrl, "code": 0, "msg": ""})
+		return
 	}
 
 	// 通过code换取网页授权access_token
