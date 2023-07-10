@@ -82,7 +82,7 @@ type UserInfo struct {
 
 // 平台结构体
 type UserOAuth struct {
-	ID            int64  `db:"id" json:"id" description:"自增ID"`
+	OID           int64  `db:"oid" json:"oid" description:"自增ID"`
 	UID           int64  `db:"uid" json:"uid" description:"用户ID"`
 	Platfrom      string `db:"platfrom" json:"platfrom" description:"外接平台名"`
 	Openid        string `db:"openid" json:"openid" description:"外接平台身份ID"`
@@ -365,7 +365,6 @@ func (m *UserModel) Delete(id int64) (int64, error) {
 		}
 		return id, nil
 	}
-
 }
 
 // Read（读取）获取用户信息 - 根据用户ID从数据库中获取用户
@@ -940,7 +939,7 @@ func (m *UserModel) CreateOAuth(data map[string]interface{}) (UserOAuth, error) 
 	}
 
 	// 生成入库ID，防止自增让人猜出平台使用量
-	data["id"] = utils.GenerateTimerID(9999) // 四位随机数
+	data["oid"] = utils.GenerateTimerID(9999) // 四位随机数
 
 	// 使用 make() 函数来创建切片，Go语言切片是对数组的抽象
 	fields := make([]string, 0)
@@ -973,8 +972,8 @@ func (m *UserModel) CreateOAuth(data map[string]interface{}) (UserOAuth, error) 
 		// println("LastInsertId failed: ", err.Error())
 		return useroauth, err
 	}
-	println("ididid:", id)
-	data["id"] = id
+	// println("oid:", id)
+	data["oid"] = id
 
 	jsonStr, _ := json.Marshal(data)
 	var person UserOAuth
@@ -994,7 +993,7 @@ func (m *UserModel) FindOAuthOpenid(platfrom, openid string) (UserOAuth, error) 
 	var useroauth UserOAuth
 
 	// 拼接 GET 的 select 查询语句
-	fields := "`id`,`uid`,`platfrom`,`openid`,`unionid`,`nickname`,`headimg`,`city`,`province`,`country`,`grouptag`,`language`,`intime`,`uptime`,`privilege`,`token`,`expires`,`refresh`,`scope`,`subscribe`,`subscribetime`,`tidings`,`remark`,`object`"
+	fields := "`oid`,`uid`,`platfrom`,`openid`,`unionid`,`nickname`,`headimg`,`city`,`province`,`country`,`grouptag`,`language`,`intime`,`uptime`,`privilege`,`token`,`expires`,`refresh`,`scope`,`subscribe`,`subscribetime`,`tidings`,`remark`,`object`"
 	sql := fmt.Sprintf("SELECT %s FROM `%s` WHERE `openid`=? AND `platfrom`=? LIMIT 1", fields, m.OauthTableName)
 	// println("\r\n", sql) // 打印sql
 
@@ -1017,7 +1016,7 @@ func (m *UserModel) FindOAuthUnionid(platfrom, unionid string) (UserOAuth, error
 	var useroauth UserOAuth
 
 	// 拼接 GET 的 select 查询语句
-	fields := "`id`,`uid`,`platfrom`,`openid`,`unionid`,`nickname`,`headimg`,`city`,`province`,`country`,`grouptag`,`language`,`intime`,`uptime`,`privilege`,`token`,`expires`,`refresh`,`scope`,`subscribe`,`subscribetime`,`tidings`,`remark`,`object`"
+	fields := "`oid`,`uid`,`platfrom`,`openid`,`unionid`,`nickname`,`headimg`,`city`,`province`,`country`,`grouptag`,`language`,`intime`,`uptime`,`privilege`,`token`,`expires`,`refresh`,`scope`,`subscribe`,`subscribetime`,`tidings`,`remark`,`object`"
 	sql := fmt.Sprintf("SELECT %s FROM `%s` WHERE `unionid`=? AND `platfrom`=? LIMIT 1", fields, m.OauthTableName)
 	// println("\r\n", sql) // 打印sql
 
@@ -1032,47 +1031,84 @@ func (m *UserModel) FindOAuthUnionid(platfrom, unionid string) (UserOAuth, error
 	return useroauth, nil // 返回结果
 }
 
-// 查找平台用户
-func (m *UserModel) FindOAuth(platfrom, openid, unionid string) (UserOAuth, error) {
-	// 先判断该用户platfrom_openid是否已经在如果不存在去查platfrom_unionID是否存在则更新该用户信息
-	// 如果platfrom_openid和platfrom_unionidf都不存在，则将用户信息插入表中并返回用户信息
-
+// 查找oid平台用户
+func (m *UserModel) FindOAuthOid(oid int64) (UserOAuth, error) {
 	var useroauth UserOAuth
 
-	typeName := "openid"
-	val := openid
-
-	if openid == "" {
-		typeName = "unionid"
-		val = unionid
-	}
-
 	// 拼接 GET 的 select 查询语句
-	fields := "`uid`,`platfrom`,`openid`,`unionid`,`nickname`,`headimg`,`city`,`province`,`country`,`grouptag`,`language`,`intime`,`uptime`,`privilege`,`token`,`expires`,`refresh`,`scope`,`subscribe`,`subscribetime`,`tidings`,`remark`,`object`"
-	sql := fmt.Sprintf("SELECT %s FROM `%s` WHERE `%s`=? AND `platfrom`=? LIMIT 1", fields, m.OauthTableName, typeName)
+	fields := "`oid`,`uid`,`platfrom`,`openid`,`unionid`,`nickname`,`headimg`,`city`,`province`,`country`,`grouptag`,`language`,`intime`,`uptime`,`privilege`,`token`,`expires`,`refresh`,`scope`,`subscribe`,`subscribetime`,`tidings`,`remark`,`object`"
+	sql := fmt.Sprintf("SELECT %s FROM `%s` WHERE `oid`=? LIMIT 1", fields, m.OauthTableName)
 
 	println("\r\n", sql) // 打印sql
 
-	err := m.DB.Get(&useroauth, sql, val, platfrom) // 查询单行数据，也可以用 NamedQuery
+	err := m.DB.Get(&useroauth, sql, oid) // 查询单行数据，也可以用 NamedQuery
 	if err != nil {
-		// 查询 unionid 是否存在
-		if openid == "" {
-			println("Err: ", err.Error())
-			return useroauth, err
-		} else {
-			typeName = "unionid"
-			val = unionid
-		}
-		sql = fmt.Sprintf("SELECT %s FROM `%s` WHERE `%s`=? AND `platfrom`=? LIMIT 1", fields, m.OauthTableName, typeName)
-		err = m.DB.Get(&useroauth, sql, val, platfrom)
-		if err != nil {
-			println("Err: ", err.Error())
-			return useroauth, err
-		}
+		println("Err: ", err.Error())
+		return useroauth, err
 	}
 
 	useroauth.Intime = utils.RFC3339ToString(useroauth.Intime, 2)
 	useroauth.Uptime = utils.RFC3339ToString(useroauth.Uptime, 2)
 
 	return useroauth, nil // 返回结果
+}
+
+// Update（更新）根据开放平台OID更新数据库中的用户的第三方信息
+func (m *UserModel) UpdateOAuth(oid int64, data map[string]interface{}) (int64, error) {
+	// 实现更新数据库中用户信息的逻辑
+
+	// 按结构体映射提交字段
+	data = utils.StructAssigMap(UserOAuth{}, data)
+
+	// 没有更新数据项直接返回
+	if len(data) == 0 {
+		return 0, nil
+	}
+
+	// 判断是否存在字段 "cell"
+	if _, ok := data["cell"]; ok {
+		if data["cell"] != "" {
+			if m.Check("cell", data["cell"].(string)) {
+				return 0, fmt.Errorf("用户cell电话已存在")
+			}
+		}
+	}
+
+	// 更新时间
+	_, uptime := utils.FormatTimestamp(time.Now().Unix())
+	data["uptime"] = uptime
+
+	// 使用 make() 函数来创建切片，Go语言切片是对数组的抽象
+	fields := make([]string, 0)
+	// values := make([]string, 0)
+	args := make(map[string]interface{})
+
+	// 获取用户提交的所有表单项字段 遍历数据
+	for key, value := range data {
+		fields = append(fields, "`"+key+"`=:"+key)
+		// values = append(values, ":"+key)
+		args[key] = value
+	}
+
+	// 构建数据库的SQL语句
+	sql := fmt.Sprintf("UPDATE `%s` SET %s WHERE `oid`=%d", m.OauthTableName, strings.Join(fields, ","), oid)
+	// println("\r\n", sql)            // 打印sql
+	// fmt.Printf("Type: %T , Data: %v\n", args, args) // 打印 args 映射的内容
+
+	// 执行插入数据库的操作
+	database, err := m.DB.NamedExec(sql, args)
+	if err != nil {
+		// 处理数据库操作错误
+		// println("NamedExec failed: ", err.Error())
+		return 0, err
+	}
+
+	// 获取插入结果
+	row, err := database.RowsAffected() // 更新行数
+	if err != nil {
+		println("LastInsertId failed: ", err.Error())
+		return 0, err
+	}
+
+	return row, nil
 }

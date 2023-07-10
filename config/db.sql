@@ -1,7 +1,7 @@
 -- 用户API接口数据库设计
 -- DB架构师：肥客泉 FK68.net
 -- 创造时间：2012-04-17
--- 修改时间：2023-05-01
+-- 修改时间：2023-07-10
 
 
 -- --------------------------------------------------------
@@ -58,7 +58,7 @@ CREATE TABLE IF NOT EXISTS `sys_user` (
 -- tidings 用户动态 因是TEXT类型不能设置缺省值所以入库时尽量初始化为空字符串减少程序错误
 -- object 预留字段 因是TEXT类型不能设置缺省值所以入库时尽量初始化为空字符串减少程序错误
 CREATE TABLE IF NOT EXISTS `sys_oauth` (
-  `id` bigint unsigned NOT NULL AUTO_INCREMENT COMMENT '序号(自动)',
+  `oid` bigint unsigned NOT NULL AUTO_INCREMENT COMMENT '序号(自动)',
   `uid` bigint unsigned NOT NULL DEFAULT '0' COMMENT '用户ID(同一平台只能绑定一个用户ID)',
   `platfrom` varchar(50) NOT NULL DEFAULT '' COMMENT '外接平台名(微信、支付宝、AppID..)',
   `openid` varchar(128) BINARY NOT NULL DEFAULT '' COMMENT '外接平台身份ID(区分大小写)',
@@ -83,7 +83,7 @@ CREATE TABLE IF NOT EXISTS `sys_oauth` (
   `object` text COMMENT '预留字段(不检索,可存json数组)',
   `intime` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '入库时间(自动)',
   `uptime` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间(自动)',
-  PRIMARY KEY (`id`),
+  PRIMARY KEY (`oid`),
   UNIQUE KEY `platfrom_openid` (`platfrom`,`openid`),
   KEY `uid` (`uid`),
   KEY `platfrom` (`platfrom`),
@@ -160,7 +160,7 @@ CREATE TABLE IF NOT EXISTS `tbj_notepad` (
   `caret` mediumint(8) DEFAULT '0' COMMENT '光标位置',
   `scroll` mediumint(8) DEFAULT '0' COMMENT '滚动位置',
   `ip` varchar(128) DEFAULT '0.0.0.0' COMMENT 'IP地址',
-  `referer` varchar(50) DEFAULT '' COMMENT '纸张来源',
+  `referer` varchar(255) DEFAULT '' COMMENT '纸张来源',
   `state` tinyint(2) NOT NULL DEFAULT '1' COMMENT '状态(0锁定 1正常)',
   `intime` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间(自动)',
   `uptime` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间(自动)',

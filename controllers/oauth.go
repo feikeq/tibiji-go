@@ -95,7 +95,7 @@ func (c *OauthController) Get() {
 
 }
 
-// 接入用户 POST:/oauth
+// 手动接入 POST:/oauth
 func (c *OauthController) Post() {
 	ctx := c.CTX
 	env := ctx.Values().GetString("ENV")
@@ -258,7 +258,75 @@ func (c *OauthController) Post() {
 	ctx.JSON(iris.Map{"data": useroauth, "code": 0, "msg": ""})
 }
 
-// 微信接入 - 网页授权任意请求类型访问 All:/oauth/wx/{code}
+// 手动绑定 PUT:/oauth
+func (c *OauthController) Put() {
+	ctx := c.CTX
+	env := ctx.Values().GetString("ENV")
+	tkUid, _ := ctx.Values().GetInt64("UID")
+	if env != "" {
+		// 打印模块名
+		println("\r\n\r\n", env, tkUid)
+		println("---------------------------------------------------------")
+		println(ctx.GetCurrentRoute().MainHandlerName() + " [" + ctx.GetCurrentRoute().Path() + "] " + ctx.Method())
+		println("---------------------------------------------------------")
+	}
+
+	// 拿所有提交数据
+	allData := utils.AllDataToMap(ctx)
+	// fmt.Printf("allData %T -> %v", allData, allData)
+
+	var oid int64
+
+	// 判断是否存在字段 "oid"
+	if _, ok := allData["oid"]; !ok {
+		println("oid不能为空")
+		ctx.JSON(iris.Map{"code": config.ErrParamEmpty, "msg": config.ErrMsgs[config.ErrParamEmpty]})
+		return
+	} else {
+		if allData["oid"] == "" {
+			println("oid不能为空")
+			ctx.JSON(iris.Map{"code": config.ErrParamEmpty, "msg": config.ErrMsgs[config.ErrParamEmpty]})
+			return
+		}
+		oid = utils.ParseInt64(allData["oid"]) // 任意数据转int64数字
+	}
+
+	// 接入一个新的的第三方平台用户 - 返回新插入数据的id
+	useroauth, err := c.Models.FindOAuthOid(oid)
+	if err != nil {
+		if env != "" {
+			println("Models.FindOAuthOid Error: ", err.Error())
+			ctx.JSON(iris.Map{"data": allData, "code": "err debug", "msg": err.Error()})
+		} else {
+			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase]})
+		}
+		return
+	}
+
+	// 如果已绑定用户则提示非法操作
+	if useroauth.UID > 0 {
+		ctx.JSON(iris.Map{"code": config.ErrUnauthorized, "msg": config.ErrMsgs[config.ErrUnauthorized]})
+		return
+	}
+
+	allData["uid"] = tkUid
+
+	// 调取模型 - 根据ID更新数据库中的信息
+	row, err := c.Models.UpdateOAuth(oid, allData)
+	if err != nil {
+		if env != "" {
+			println("Models.UpdateOAuth Error: ", err.Error())
+			ctx.JSON(iris.Map{"data": allData, "code": "err debug", "msg": err.Error()})
+		} else {
+			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase]})
+		}
+		return
+	}
+	ctx.JSON(iris.Map{"data": row, "code": 0, "msg": ""})
+}
+
+// 微信接入 - 网页授权任意请求类型访问 POST:/oauth/wx/{code}
+// 微信授权 - 网页授权任意请求类型访问 GET:/oauth/wx/{scope}
 func (c *OauthController) AllWxBy(code string) {
 	ctx := c.CTX
 	env := ctx.Values().GetString("ENV")
