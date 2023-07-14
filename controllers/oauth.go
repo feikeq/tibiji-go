@@ -141,6 +141,7 @@ func (c *OauthController) Post() {
 		}
 		openid = allData["openid"].(string)
 	}
+	println(platfrom, openid)
 
 	// 删除不能修改的字段
 	// delete(allData, "uid")    // 删除 用户ID
@@ -234,11 +235,11 @@ func (c *OauthController) Post() {
 		token, _ := utils.GenerateToken(*user.UID, exptime, secret)
 		result["token"] = token
 
-		// 操盘写入日志表
+		// 操作写入日志表
 		logData := map[string]interface{}{
 			"uid":    *user.UID,
-			"action": platfrom,
-			"note":   openid,
+			"action": "login",
+			"note":   platfrom,
 			"actip":  utils.GetRealIP(ctx),
 			"ua":     ua,
 		}
@@ -247,6 +248,7 @@ func (c *OauthController) Post() {
 			if env != "" {
 				println("Models.SetLogs Error: ", err.Error())
 				ctx.JSON(iris.Map{"data": logData, "code": "err debug", "msg": err.Error()})
+				return
 			}
 		}
 		// 返回登录状态
@@ -322,7 +324,110 @@ func (c *OauthController) Put() {
 		}
 		return
 	}
+
+	// 操作写入日志表
+	logData := map[string]interface{}{
+		"uid":    tkUid,
+		"action": "bind",
+		"note":   useroauth.Platfrom,
+		"actip":  utils.GetRealIP(ctx),
+		"ua":     ctx.GetHeader("User-Agent"), // 拿到UA信息User-Agent
+	}
+	log := c.Models.SetLogs(logData)
+	if log != nil {
+		if env != "" {
+			println("Models.SetLogs Error: ", err.Error())
+			ctx.JSON(iris.Map{"data": logData, "code": "err debug", "msg": err.Error()})
+			return
+		}
+	}
+
 	ctx.JSON(iris.Map{"data": row, "code": 0, "msg": ""})
+}
+
+// 手动解绑 DELETE:/oauth
+func (c *OauthController) Delete() {
+	ctx := c.CTX
+	env := ctx.Values().GetString("ENV")
+	tkUid, _ := ctx.Values().GetInt64("UID")
+	if env != "" {
+		// 打印模块名
+		println("\r\n\r\n", env, tkUid)
+		println("---------------------------------------------------------")
+		println(ctx.GetCurrentRoute().MainHandlerName() + " [" + ctx.GetCurrentRoute().Path() + "] " + ctx.Method())
+		println("---------------------------------------------------------")
+	}
+
+	// 拿所有提交数据
+	allData := utils.AllDataToMap(ctx)
+	fmt.Printf("allData: %+v\n", allData) // 打印allData
+
+	var oid int64
+
+	// 判断是否存在字段 "oid"
+	if _, ok := allData["oid"]; !ok {
+		println("oid不能为空")
+		ctx.JSON(iris.Map{"code": config.ErrParamEmpty, "msg": config.ErrMsgs[config.ErrParamEmpty]})
+		return
+	} else {
+		if allData["oid"] == "" {
+			println("oid不能为空")
+			ctx.JSON(iris.Map{"code": config.ErrParamEmpty, "msg": config.ErrMsgs[config.ErrParamEmpty]})
+			return
+		}
+		oid = utils.ParseInt64(allData["oid"]) // 任意数据转int64数字
+	}
+
+	useroauth, err := c.Models.FindOAuthOid(oid)
+	if err != nil {
+		if env != "" {
+			println("Models.FindOAuthOid Error: ", err.Error())
+			ctx.JSON(iris.Map{"data": allData, "code": "err debug", "msg": err.Error()})
+		} else {
+			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase]})
+		}
+		return
+	}
+
+	// 如果操作人不是自己
+	if tkUid != useroauth.UID {
+		ctx.JSON(iris.Map{"code": config.ErrUnauthorized, "msg": config.ErrMsgs[config.ErrUnauthorized]})
+		return
+	}
+
+	allData["uid"] = 0
+
+	// 调取模型 - 根据ID更新数据库中的信息
+	row, err := c.Models.UpdateOAuth(oid, allData)
+	if err != nil {
+		if env != "" {
+			println("Models.UpdateOAuth Error: ", err.Error())
+			ctx.JSON(iris.Map{"data": allData, "code": "err debug", "msg": err.Error()})
+		} else {
+			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase]})
+		}
+		return
+	}
+
+	// 操作写入日志表
+	logData := map[string]interface{}{
+		"uid":    tkUid,
+		"action": "unbind",
+		"note":   useroauth.Platfrom,
+		"actip":  utils.GetRealIP(ctx),
+		"ua":     ctx.GetHeader("User-Agent"), // 拿到UA信息User-Agent
+	}
+	log := c.Models.SetLogs(logData)
+	if log != nil {
+		if env != "" {
+			println("Models.SetLogs Error: ", err.Error())
+			ctx.JSON(iris.Map{"data": logData, "code": "err debug", "msg": err.Error()})
+			return
+		}
+	}
+
+	ctx.JSON(iris.Map{"data": row, "code": 0, "msg": ""})
+
 }
 
 // 微信接入 - 网页授权任意请求类型访问 POST:/oauth/wx/{code}

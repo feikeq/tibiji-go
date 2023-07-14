@@ -1038,8 +1038,7 @@ func (m *UserModel) FindOAuthOid(oid int64) (UserOAuth, error) {
 	// 拼接 GET 的 select 查询语句
 	fields := "`oid`,`uid`,`platfrom`,`openid`,`unionid`,`nickname`,`headimg`,`city`,`province`,`country`,`grouptag`,`language`,`intime`,`uptime`,`privilege`,`token`,`expires`,`refresh`,`scope`,`subscribe`,`subscribetime`,`tidings`,`remark`,`object`"
 	sql := fmt.Sprintf("SELECT %s FROM `%s` WHERE `oid`=? LIMIT 1", fields, m.OauthTableName)
-
-	println("\r\n", sql) // 打印sql
+	// println("\r\n", sql) // 打印sql
 
 	err := m.DB.Get(&useroauth, sql, oid) // 查询单行数据，也可以用 NamedQuery
 	if err != nil {
@@ -1063,15 +1062,6 @@ func (m *UserModel) UpdateOAuth(oid int64, data map[string]interface{}) (int64, 
 	// 没有更新数据项直接返回
 	if len(data) == 0 {
 		return 0, nil
-	}
-
-	// 判断是否存在字段 "cell"
-	if _, ok := data["cell"]; ok {
-		if data["cell"] != "" {
-			if m.Check("cell", data["cell"].(string)) {
-				return 0, fmt.Errorf("用户cell电话已存在")
-			}
-		}
 	}
 
 	// 更新时间

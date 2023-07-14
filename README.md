@@ -1,4 +1,4 @@
-# 提笔记 - 肥客接口架构  Ver 3.0.4
+# 提笔记 - 肥客接口架构  Ver 3.0.5
 [![The Go Programming Language](https://img.shields.io/badge/Go-v1.20.5-green)](https://github.com/golang/go)
 [![Iris](https://img.shields.io/badge/Iris-v12.2.0-green)](https://github.com/kataras/iris)
 [![sqlx](https://img.shields.io/badge/sqlx-v1.3.5-green)](https://github.com/jmoiron/sqlx)

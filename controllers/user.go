@@ -527,7 +527,6 @@ func (c *UserController) DeleteBy(id int64) {
 	}
 
 	ctx.JSON(iris.Map{"data": row, "code": 0, "msg": ""})
-
 }
 
 // 附属资料 GET:/user/{uid}/material
@@ -701,7 +700,7 @@ func (c *UserController) PatchBy(id int64) {
 		return
 	}
 
-	// 操盘写入日志表
+	// 操作写入日志表
 	logData := map[string]interface{}{
 		"uid":    id,
 		"action": "change",
@@ -714,9 +713,8 @@ func (c *UserController) PatchBy(id int64) {
 		if env != "" {
 			println("Models.SetLogs Error: ", err.Error())
 			ctx.JSON(iris.Map{"data": logData, "code": "err debug", "msg": err.Error()})
+			return
 		}
-		return
-
 	}
 
 	ctx.JSON(iris.Map{"data": key, "code": 0, "msg": "ok"})
@@ -862,7 +860,7 @@ func (c *UserController) PostLogin() {
 	token, _ := utils.GenerateToken(*user.UID, exptime, secret)
 	result["token"] = token
 
-	// 操盘写入日志表
+	// 操作写入日志表
 	logData := map[string]interface{}{
 		"uid":    *user.UID,
 		"action": "login",
@@ -875,6 +873,7 @@ func (c *UserController) PostLogin() {
 		if env != "" {
 			println("Models.SetLogs Error: ", err.Error())
 			ctx.JSON(iris.Map{"data": logData, "code": "err debug", "msg": err.Error()})
+			return
 		}
 	}
 
@@ -1156,7 +1155,7 @@ func (c *UserController) PostPassword() {
 		return
 	}
 
-	// 操盘写入日志表
+	// 操作写入日志表
 	logData := map[string]interface{}{
 		"uid":    *user.UID,
 		"action": "forgetpwd",
