@@ -126,6 +126,24 @@ func (c *CommonController) GetEmail(ctx iris.Context) {
 
 	// 获取配置项
 	otherCfg := ctx.Application().ConfigurationReadOnly().GetOther()
+	servKeySecret := otherCfg["SERV_KEY_SECRET"].(string) // API高级密钥
+
+	// 拿所有提交数据
+	allData := utils.AllDataToMap(ctx)
+	// fmt.Printf("args: %+v\n", allData) // 打印
+
+	var key string
+	// 判断是否存在字段 "key"
+	if _, ok := allData["key"]; ok {
+		key = allData["key"].(string)
+	}
+
+	// 鉴别API高级密钥
+	if servKeySecret != key {
+		ctx.JSON(iris.Map{"code": config.ErrUnauthorized, "msg": config.ErrMsgs[config.ErrUnauthorized]})
+		return
+	}
+
 	smtpName := otherCfg["SMTP_FROM_NAME"].(string)  // 发件人名称
 	smtpWebsite := otherCfg["SMTP_WEBSITE"].(string) // 邮件的网站网址
 
