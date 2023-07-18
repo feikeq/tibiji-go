@@ -462,14 +462,25 @@ func (c *OauthController) AllWxBy(code string) {
 	otherCfg := ctx.Application().ConfigurationReadOnly().GetOther()
 	wx_appid := otherCfg["WX_APPID"].(string)         // 公众号的唯一标识
 	wx_appsecret := otherCfg["WX_APPSECRET"].(string) // 公众号的appsecret
+	wx_state := "STATE"
+	wx_agentid := "" // 企业微信 应用agentid
 
 	// 判断是否存在字段 "appid"
 	if _, ok := allData["appid"]; ok {
 		wx_appid = allData["appid"].(string)
 	}
-	// 判断是否存在字段 "appid"
+	// 判断是否存在字段 "appsecret"
 	if _, ok := allData["appsecret"]; ok {
 		wx_appsecret = allData["appsecret"].(string)
+	}
+	// 判断是否存在字段 "state"
+	if _, ok := allData["state"]; ok {
+		wx_state = allData["state"].(string)
+	}
+
+	// 判断是否存在字段 "agentid"
+	if _, ok := allData["agentid"]; ok {
+		wx_agentid = allData["agentid"].(string)
 	}
 
 	if method == "GET" {
@@ -482,10 +493,19 @@ func (c *OauthController) AllWxBy(code string) {
 		scope := "snsapi_base"
 		if code == "snsapi_userinfo" {
 			scope = "snsapi_userinfo"
+		} else if code == "snsapi_privateinfo" {
+			scope = "snsapi_privateinfo"
 		}
 		// redirect_uri 授权后重定向的回调链接地址， 请使用 urlEncode 对链接进行处理
 		wx_redirect_uri = url.QueryEscape(wx_redirect_uri)
-		codeUrl := fmt.Sprintf("https://open.weixin.qq.com/connect/oauth2/authorize?appid=%s&redirect_uri=%s&response_type=%s&scope=SCOPE&state=STATE#wechat_redirect", wx_appid, wx_redirect_uri, scope)
+		// 企业微信授权会多一个 agentid 参数 当oauth2中appid=corpid时，scope为snsapi_userinfo或snsapi_privateinfo时，必须填agentid参数，否则系统会视为snsapi_base，不会返回敏感信息。
+		codeUrl := fmt.Sprintf("https://open.weixin.qq.com/connect/oauth2/authorize?appid=%s&redirect_uri=%s&response_type=code&scope=%s&state=%s", wx_appid, wx_redirect_uri, scope, wx_state)
+		// 如果有企业微信的应用agentid
+		if wx_agentid != "" {
+			codeUrl += fmt.Sprintf("&agentid=%s#wechat_redirect", wx_agentid)
+		} else {
+			codeUrl += "#wechat_redirect"
+		}
 		ctx.JSON(iris.Map{"data": codeUrl, "code": 0, "msg": ""})
 		return
 	}
