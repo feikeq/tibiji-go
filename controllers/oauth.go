@@ -479,9 +479,13 @@ func (c *OauthController) AllWxBy(code string) {
 		if _, ok := allData["redirect_uri"]; ok {
 			wx_redirect_uri = allData["redirect_uri"].(string)
 		}
+		scope := "snsapi_base"
+		if code == "snsapi_userinfo" {
+			scope = "snsapi_userinfo"
+		}
 		// redirect_uri 授权后重定向的回调链接地址， 请使用 urlEncode 对链接进行处理
 		wx_redirect_uri = url.QueryEscape(wx_redirect_uri)
-		codeUrl := fmt.Sprintf("https://open.weixin.qq.com/connect/oauth2/authorize?appid=%s&redirect_uri=%s&response_type=code&scope=SCOPE&state=STATE#wechat_redirect", wx_appid, wx_redirect_uri)
+		codeUrl := fmt.Sprintf("https://open.weixin.qq.com/connect/oauth2/authorize?appid=%s&redirect_uri=%s&response_type=%s&scope=SCOPE&state=STATE#wechat_redirect", wx_appid, wx_redirect_uri, scope)
 		ctx.JSON(iris.Map{"data": codeUrl, "code": 0, "msg": ""})
 		return
 	}
