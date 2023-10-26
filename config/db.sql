@@ -102,7 +102,7 @@ CREATE TABLE IF NOT EXISTS `sys_oauth` (
 CREATE TABLE IF NOT EXISTS `sys_material` (
   `uid` bigint unsigned NOT NULL COMMENT '用户UID',
   `cid` bigint unsigned NOT NULL DEFAULT '0' COMMENT '联系人ID',
-  `balance` decimal(18,2) NOT NULL default '0.00' COMMENT '余额（元）',
+  `balance` decimal(18,2) NOT NULL DEFAULT '0.00' COMMENT '余额（元）',
   `vip` char(1) NOT NULL DEFAULT '0' COMMENT '会员(0否 1是 2超级会员)',
   `exptime` datetime NOT NULL DEFAULT '0000-00-00 00:00:00' COMMENT '会员到期时间',
   `manage` char(1) NOT NULL DEFAULT '0' COMMENT '管理权限(0普通用户 1管理员)',
