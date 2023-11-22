@@ -29,6 +29,7 @@ import (
 	"github.com/kataras/iris/v12/middleware/logger"  // iris的日志
 	"github.com/kataras/iris/v12/middleware/recover" // 能够在崩溃时记录和恢复
 	"github.com/kataras/iris/v12/mvc"                // iris的mcv
+	"github.com/kataras/iris/v12/websocket"
 )
 
 // main 函数是程序的起点。 因此，整个包中只能有一个 main 函数（在第一行中定义的那个）
@@ -97,6 +98,7 @@ func main() {
 	// ctx.Values().Set() 值是处理程序（或中间件）在彼此之间进行通信的方式，
 	// 获取时使用 ctx.Values().Get("xxxx")内存地址,当然也可以 GetString 或 GetInt64 拿实际值
 	app.Use(func(ctx iris.Context) {
+		// ctx 即Context是iris框架中的一个路由上下文对象
 		ctx.Values().Set("ENV", env)
 		ctx.Next() // 为了执行链中的下一个处理程序
 
@@ -233,7 +235,7 @@ func main() {
 	// #文档 https://docs.iris-go.com/iris/view-templates/view
 	app.RegisterView(iris.HTML(assetsPath+"/views/", ".html"))
 
-	// 注册路由 (不推荐在main函数里写业务逻辑：采用低耦合高内聚的项目架构)
+	// HTTP多种请求类型的直接处理，直接定义为get方法、post方法、put方法等来注册路由 (不推荐在main函数里写业务逻辑：采用低耦合高内聚的项目架构)
 	app.Get("/", func(ctx iris.Context) {
 		// // ctx.HTML("<h1>项目名</h1>")
 
@@ -257,6 +259,11 @@ func main() {
 		ctx.Markdown(data)
 
 	})
+
+	// // iris框架还支持使用通用的Handle方法来自定义编写自己的请求处理类型及对应的方法。
+	// app.Handle("POST", "/user/info", func(context iris.Context) {
+	// 	context.WriteString(" User Info is Post Request , Deal is in handle func ")
+	// })
 
 	// 404
 	app.OnErrorCode(iris.StatusNotFound, func(ctx iris.Context) {
@@ -311,6 +318,7 @@ func main() {
 		commonController := &controllers.CommonController{} // 不需要模型简单赋值调用（当然也可以传值进去像 CommonController{DB: db} ）
 
 		// 使用MVC模式组织路由和控制器
+		// iris框架封装的mvc包，支持所有的http方法。mvc模块会自动执行到Get()、Post()等八种对应的方法
 
 		// .Register(userDB) 对于每个控制器，我们都注册了相应的服务，并将控制器实例作为路由处理函数。（ mvc.应用程序 Register 方法注册一个依赖项）
 		// userApp := mvc.New(app.Party("/user"))
@@ -346,8 +354,14 @@ func main() {
 
 	println() //只是为了让控制台换一行，不进行实质性的内容输出
 
-	// 启动 HTTP 服务器
+	// 注册ws服务
+	websocketController := controllers.NewWebsocketController()
+	// mvc.New(app.Party("/websocket")).Handle(websocketController)
+	// HandleWebsocket方法是专门用来处理Websocket连接的。当一个Websocket连接被建立时，HandleWebsocket会将这个连接路由到指定的控制器。
+	// mvc.New(app.Party("/websocket")).HandleWebsocket(websocketController)
+	app.Get("/websocket", websocket.Handler(websocketController.Conn))
 
+	// 启动 HTTP 服务器
 	if env != "" {
 		// 开发环境和测试环境中可能更倾向于使用 app.Run
 		// app.Run 是一个阻塞方法，它会在启动 HTTP 服务器后阻止程序继续向下执行。这对于开发阶段的快速测试和调试非常方便，因为你可以在服务器运行时实时查看结果，并进行必要的更改和调试。

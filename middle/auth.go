@@ -55,6 +55,8 @@ func MiddlewareAuthToken(ctx iris.Context) {
 		"controllers.RemindController.GetQueue",     // 提醒队列
 		"controllers.NotepadController.GetBy",       // 获取纸张
 		"controllers.NotepadController.GetShareBy",  // 分享纸张
+		"main.main.Handler.func8",                   // 实时通信
+		"controllers.WebsocketController.Get",
 	}
 	currentTag := ctx.GetCurrentRoute().MainHandlerName()
 
