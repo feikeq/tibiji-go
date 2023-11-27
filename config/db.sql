@@ -239,6 +239,8 @@ CREATE TABLE IF NOT EXISTS `tbj_account` (
   KEY `btime` (`btime`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8 COMMENT='记帐表';
 
+
+
 -- --------------------------------------------------------
 -- (业务表)其它业务表
 -- --------------------------------------------------------
