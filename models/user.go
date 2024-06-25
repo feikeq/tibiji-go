@@ -171,10 +171,10 @@ func (m *UserModel) Create(data map[string]interface{}) (int64, error) {
 	// 判断是否存在字段 "uid"
 	if _, ok := data["uid"]; ok {
 		if data["uid"] == "" {
-			data["uid"] = utils.GenerateTimerID()
+			data["uid"] = utils.GenerateTimerID() // 不指尾数默认16位（13位时间戳+3随机尾数）
 		}
 	} else {
-		data["uid"] = utils.GenerateTimerID()
+		data["uid"] = utils.GenerateTimerID() // 不指尾数默认16位（13位时间戳+3随机尾数）
 	}
 
 	// 入库时间
@@ -939,7 +939,7 @@ func (m *UserModel) CreateOAuth(data map[string]interface{}) (UserOAuth, error) 
 	}
 
 	// 生成入库ID，防止自增让人猜出平台使用量
-	data["oid"] = utils.GenerateTimerID(9999) // 四位随机数
+	data["oid"] = utils.GenerateTimerID(9999) // （13位时间戳+4随机尾数）随机数每位最大到9
 
 	// 使用 make() 函数来创建切片，Go语言切片是对数组的抽象
 	fields := make([]string, 0)

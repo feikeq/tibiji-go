@@ -392,7 +392,7 @@ func InsertDB() {
 
 	fmt.Println(myTime)
 
-	uid := utils.GenerateTimerID()
+	uid := utils.GenerateTimerID() // 默认（13位时间戳+3随机尾数）
 	_, intime := utils.FormatTimestamp(time.Now().Unix())
 	pwd := utils.HashPassword("admin", intime)
 	// println(uid)

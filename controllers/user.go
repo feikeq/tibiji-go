@@ -1025,10 +1025,15 @@ func (c *UserController) GetPassword() {
 	hours := duration.Hours()                        // 多少小时
 	now := time.Now()                                // 当前时间
 	expStr := now.Add(duration).Format(timeFormat)   // 格式化密保超时时间
-	// 生成验证码
-	milli := fmt.Sprintf("%d", now.UnixMilli()) // 获取时间戳（毫秒） 1670919222532 类似于JS里的 Date.now()
-	code := milli[len(milli)-6:]                // 取最后6位做为code验证码
-	println("code验证码:", code)
+	// // 用纯时间戳（毫秒）生成验证码code
+	// milli := fmt.Sprintf("%d", now.UnixMilli()) // 获取时间戳（毫秒） 1670919222532 类似于JS里的 Date.now()
+	// code := milli[len(milli)-6:]                // 取最后6位做为code验证码
+	// println(milli,"code验证码:", code)
+
+	// 用纯时间戳（毫秒）+2随机数  生成验证码code
+	milli := utils.GenerateTimerID(99) // （13位时间戳+2随机尾数每位最大到9
+	code := milli[len(milli)-6:]       // 取最后6位做为code验证码
+	println(milli, "code验证码:", code)
 
 	secret := otherCfg["SERV_KEY_SECRET"].(string) + code // 验证码的特殊密钥
 	// 生成 token 返回给客户

@@ -83,7 +83,7 @@ func (m *AccountModel) Create(data map[string]interface{}) (int64, error) {
 	data["intime"] = intime
 	data["uptime"] = intime
 	// 生成入库ID，防止自增让人猜出平台使用量
-	data["aid"] = utils.GenerateTimerID(9999) // 四位随机数
+	data["aid"] = utils.GenerateTimerID(9999) // （13位时间戳+4随机尾数）随机数每位最大到9
 
 	// 判断是否存在字段 "btime"
 	if _, ok := data["btime"]; ok {

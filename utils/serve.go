@@ -21,9 +21,9 @@ import (
 )
 
 // 生成时间唯一ID
-// ( 默认randomSource随机数据是999，可以指定随机数 )
-// utils.GenerateTimerID() 默认16位
-// utils.GenerateTimerID(88888)) 这种就是13+5位置随机数是18位
+// ( 默认randomSource尾数随机数据是999，可以指定尾数的随机数 )
+// utils.GenerateTimerID() 不指尾数默认16位（13位时间戳+3随机尾数）
+// utils.GenerateTimerID(88888)) 这种就是13+5位随机数尾数是18位
 func GenerateTimerID(randomSource ...int) string {
 	num := 999
 	if len(randomSource) > 0 {

@@ -95,7 +95,7 @@ func (c *CommonController) PostUpload(ctx iris.Context) {
 		// 获取后缀名
 		ext := filepath.Ext(file.Filename)
 		// 生成新的文件名
-		newFilename := utils.GenerateTimerID(88888) + ext // 五位随机数据最大到5个8
+		newFilename := utils.GenerateTimerID(88888) + ext // （13位时间戳+5随机尾数最大到5个8）
 
 		// println(failures, ":::=>", theFolderName+newFilename)
 		_, err = ctx.SaveFormFile(file, theFolderName+newFilename)

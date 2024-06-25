@@ -52,7 +52,7 @@ func (m *NotepadModel) Create(data map[string]interface{}) (int64, error) {
 	data["intime"] = intime
 	data["uptime"] = intime
 	// 生成入库ID，防止自增让人猜出平台使用量
-	data["nid"] = utils.GenerateTimerID(9999) // 四位随机数
+	data["nid"] = utils.GenerateTimerID(9999) // （13位时间戳+4随机尾数）随机数每位最大到9
 	data["share"] = utils.GenerateShortId()   // 生成独特的非连续短ID
 
 	// 使用 make() 函数来创建切片，Go语言切片是对数组的抽象
