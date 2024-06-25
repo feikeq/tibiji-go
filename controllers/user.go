@@ -1033,7 +1033,7 @@ func (c *UserController) GetPassword() {
 	// 用纯时间戳（毫秒）+2随机数  生成验证码code
 	milli := utils.GenerateTimerID(99) // （13位时间戳+2随机尾数每位最大到9
 	code := milli[len(milli)-6:]       // 取最后6位做为code验证码
-	println(milli, "code验证码:", code)
+	println(milli, "用纯时间戳（毫秒）+2随机数  生成验证码code:", code)
 
 	secret := otherCfg["SERV_KEY_SECRET"].(string) + code // 验证码的特殊密钥
 	// 生成 token 返回给客户
