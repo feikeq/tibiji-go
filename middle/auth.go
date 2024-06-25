@@ -44,12 +44,13 @@ func MiddlewareAuthToken(ctx iris.Context) {
 	excludeLists := []string{
 		"controllers.UserController.Post",           // 添加用户
 		"controllers.UserController.PostLogin",      // 用户登录
+		"controllers.UserController.GetPassword",    // 找回密码
+		"controllers.UserController.PostPassword",   // 找回密码后设置新密码
+		"controllers.UserController.PatchCaptcha",   // 获取验证码
 		"controllers.OauthController.Post",          // 接入用户
 		"controllers.OauthController.AllWxBy",       // 微信接入
 		"controllers.OauthController.AllWxJsticket", // 微信JS-SDK
 		"controllers.CommonController.GetEmail",     // 邮件发送测试
-		"controllers.UserController.GetPassword",    // 找回密码
-		"controllers.UserController.PostPassword",   // 找回密码后设置新密码
 		"controllers.AccountController.GetType",     // 帐单类目
 		"controllers.RemindController.GetTask",      // 提醒任务
 		"controllers.RemindController.GetQueue",     // 提醒队列
