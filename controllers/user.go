@@ -1017,21 +1017,21 @@ func (c *UserController) GetPassword() {
 
 	// 获取配置项
 	otherCfg := ctx.Application().ConfigurationReadOnly().GetOther()
-	exptime := otherCfg["SERV_SAFE_ETIME"].(int64)                          // 设置密保超时时间(秒)
-	smtpName := otherCfg["SMTP_FROM_NAME"].(string)                         // 发件人名称
+	exptime := otherCfg["SERV_SAFE_ETIME"].(int64)                          // 密保时间                         // 设置密保超时时间(秒)
+	smtpName := otherCfg["SMTP_FROM_NAME"].(string)                         // 发件人名称                        // 发件人名称
 	timeFormat := ctx.Application().ConfigurationReadOnly().GetTimeFormat() // # 时间格式TimeFormat配置项
 
 	duration := time.Duration(exptime) * time.Second // 将秒转为小时 不使用 /3600 的方式去计算
-	hours := duration.Hours()
-	now := time.Now()
-	expStr := now.Add(duration).Format(timeFormat)
+	hours := duration.Hours()                        // 多少小时
+	now := time.Now()                                // 当前时间
+	expStr := now.Add(duration).Format(timeFormat)   // 格式化密保超时时间
 	// 生成验证码
 	milli := fmt.Sprintf("%d", now.UnixMilli()) // 获取时间戳（毫秒） 1670919222532 类似于JS里的 Date.now()
 	code := milli[len(milli)-6:]                // 取最后6位做为code验证码
 	println("code验证码:", code)
 
 	secret := otherCfg["SERV_KEY_SECRET"].(string) + code // 验证码的特殊密钥
-	// 添加 token
+	// 生成 token 返回给客户
 	token, _ := utils.GenerateToken(*user.UID, exptime, secret)
 
 	subject := fmt.Sprintf("[%s安全中心]密码找回服务", smtpName)
@@ -1053,6 +1053,8 @@ func (c *UserController) GetPassword() {
 
 // 找回密码后设置新密码 POST:/user/password
 func (c *UserController) PostPassword() {
+	// 利用token验证令牌 和code验证码 来判断令牌是否正确
+
 	ctx := c.CTX
 	env := ctx.Values().GetString("ENV")
 	tkUid, _ := ctx.Values().GetInt64("UID")
