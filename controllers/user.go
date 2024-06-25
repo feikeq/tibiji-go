@@ -1024,16 +1024,17 @@ func (c *UserController) GetPassword() {
 	duration := time.Duration(exptime) * time.Second // 将秒转为小时 不使用 /3600 的方式去计算
 	hours := duration.Hours()                        // 多少小时
 	now := time.Now()                                // 当前时间
-	expStr := now.Add(duration).Format(timeFormat)   // 格式化密保超时时间
+	expStr := now.Add(duration).Format(timeFormat)   // 格式化密保超时时间 2023-06-01 14:35:04
 	// // 用纯时间戳（毫秒）生成验证码code
 	// milli := fmt.Sprintf("%d", now.UnixMilli()) // 获取时间戳（毫秒） 1670919222532 类似于JS里的 Date.now()
 	// code := milli[len(milli)-6:]                // 取最后6位做为code验证码
 	// println(milli,"code验证码:", code)
 
-	// 用纯时间戳（毫秒）+2随机数  生成验证码code
-	milli := utils.GenerateTimerID(99) // （13位时间戳+2随机尾数每位最大到9
-	code := milli[len(milli)-6:]       // 取最后6位做为code验证码
-	println(milli, "用纯时间戳（毫秒）+2随机数  生成验证码code:", code)
+	// 用纯时间戳（毫秒）+5随机数  生成验证码code
+	milli := utils.GenerateTimerID(99999) // （13位时间戳+5随机尾数每位最大到9
+	code := milli[len(milli)-6:]          // 取最后6位做为code验证码
+	println(now.UnixMilli(), milli, "用纯时间戳（毫秒）+5随机数  生成验证码code:", code)
+	// 1719305088793 171930508879316643 用纯时间戳（毫秒）+5随机数  生成验证码code: 316643
 
 	secret := otherCfg["SERV_KEY_SECRET"].(string) + code // 验证码的特殊密钥
 	// 生成 token 返回给客户

@@ -105,7 +105,7 @@ func VerifyToken(tokenString string, secret string) (int64, error) {
 	}
 
 	// 拆解TOKEN
-	expStr := token[tokeLen-10:]                 // 最后10位是秒的时间戳
+	expStr := token[tokeLen-10:]                 // 最后10位是到秒的时间戳
 	valid := token[tokeLen-42 : tokeLen-10]      // 验证串是中间32位置
 	uidStr := token[:tokeLen-42]                 // 用户ID转为10进制数字的字符串
 	check := CalculateMD5(uidStr + key + expStr) // 生成检查串
