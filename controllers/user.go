@@ -316,6 +316,60 @@ func (c *UserController) Post() {
 
 	// fmt.Printf("变量类型type: %T, 变量的值value: %v\n", allData, allData)
 
+	// 获取配置项
+	otherCfg := ctx.Application().ConfigurationReadOnly().GetOther()
+	isCheck := otherCfg["SERV_REGISTER_CHECK"].(bool) // 是否验证注册
+	fmt.Printf("isCheck变量类型type: %T, 变量的值value: %v\n", isCheck, isCheck)
+	if isCheck {
+
+		var errTxt = ""
+		// 判断是否存在字段 "ticket"
+		if _, ok := allData["ticket"]; !ok {
+			errTxt = "验证令牌ticket不能为空"
+		} else {
+			if allData["ticket"] == "" {
+				errTxt = "验证令牌ticket不能为空"
+			}
+		}
+
+		println("ticket", allData["ticket"])
+
+		// 判断是否存在字段 "code"
+		if _, ok := allData["code"]; !ok {
+			errTxt = "验证码code不能为空"
+		} else {
+			if allData["code"] == "" {
+				errTxt = "验证码code不能为空"
+			}
+		}
+		if errTxt != "" {
+			if env != "" {
+				println("errTxt Error: ", errTxt)
+				ctx.JSON(iris.Map{"data": allData, "code": "err debug", "msg": errTxt})
+			} else {
+				ctx.JSON(iris.Map{"code": config.ErrParamEmpty, "msg": config.ErrMsgs[config.ErrParamEmpty]})
+
+			}
+			return
+		}
+		ticket := allData["ticket"].(string)
+		code := allData["code"].(string)
+		secret := otherCfg["SERV_KEY_SECRET"].(string) + code // 验证码的特殊密钥
+
+		println(ticket, code, secret)
+
+		// 进行 Basic Auth 身份认证
+		temp_uid, err := utils.VerifyToken(ticket, secret)
+		if err != nil {
+			println("VerifyTicket Error: ", err.Error())
+			ctx.StatusCode(iris.StatusUnauthorized)
+			ctx.JSON(iris.Map{"code": config.ErrVerificationCode, "msg": config.ErrMsgs[config.ErrVerificationCode]})
+			return
+		}
+
+		println("temp_uid", temp_uid)
+	}
+
 	// 调取创建用户模型 - 返回新插入数据的id
 	uid, err := c.Models.Create(allData)
 	if err != nil {
@@ -1059,7 +1113,7 @@ func (c *UserController) GetPassword() {
 
 // 找回密码后设置新密码 POST:/user/password
 func (c *UserController) PostPassword() {
-	// 利用token验证令牌 和code验证码 来判断令牌是否正确
+	// 利用ticket验证令牌 和code验证码 来判断令牌是否正确
 
 	ctx := c.CTX
 	env := ctx.Values().GetString("ENV")
@@ -1077,12 +1131,12 @@ func (c *UserController) PostPassword() {
 	// fmt.Printf("allData: %+v\n", allData) // 打印allData
 
 	var errTxt = ""
-	// 判断是否存在字段 "token"
-	if _, ok := allData["token"]; !ok {
-		errTxt = "验证令牌token不能为空"
+	// 判断是否存在字段 "ticket"
+	if _, ok := allData["ticket"]; !ok {
+		errTxt = "验证令牌ticket不能为空"
 	} else {
-		if allData["token"] == "" {
-			errTxt = "验证令牌token不能为空"
+		if allData["ticket"] == "" {
+			errTxt = "验证令牌ticket不能为空"
 		}
 	}
 
@@ -1113,7 +1167,7 @@ func (c *UserController) PostPassword() {
 		}
 		return
 	}
-	token := allData["token"].(string)
+	ticket := allData["ticket"].(string)
 	pwd := allData["pwd"].(string)
 	code := allData["code"].(string)
 
@@ -1122,9 +1176,9 @@ func (c *UserController) PostPassword() {
 	secret := otherCfg["SERV_KEY_SECRET"].(string) + code // 验证码的特殊密钥
 
 	// 进行 Basic Auth 身份认证
-	uid, err := utils.VerifyToken(token, secret)
+	uid, err := utils.VerifyToken(ticket, secret)
 	if err != nil {
-		println("VerifyToken Error: ", err.Error())
+		println("VerifyTicket Error: ", err.Error())
 		ctx.StatusCode(iris.StatusUnauthorized)
 		ctx.JSON(iris.Map{"code": config.ErrVerificationCode, "msg": config.ErrMsgs[config.ErrVerificationCode]})
 		return
@@ -1195,6 +1249,107 @@ func (c *UserController) PostPassword() {
 	}
 
 	ctx.JSON(iris.Map{"data": data, "code": 0, "msg": "密码重置成功"})
+}
+
+// 获取验证码 patch:/user/captcha
+func (c *UserController) PatchCaptcha() {
+	ctx := c.CTX
+	env := ctx.Values().GetString("ENV")
+	tkUid, _ := ctx.Values().GetInt64("UID")
+	if env != "" {
+		// 打印模块名
+		println("\r\n\r\n", env, tkUid)
+		println("---------------------------------------------------------")
+		println(ctx.GetCurrentRoute().MainHandlerName() + " [" + ctx.GetCurrentRoute().Path() + "] " + ctx.Method())
+		println("---------------------------------------------------------")
+	}
+
+	// 拿所有提交数据
+	allData := utils.AllDataToMap(ctx)
+	// fmt.Printf("allData: %+v\n", allData) // 打印allData
+
+	var errTxt = ""
+	// 判断是否存在字段 "name"
+	if _, ok := allData["name"]; !ok {
+		errTxt = "用户名name不能为空"
+	} else {
+		if allData["name"] == "" {
+			errTxt = "用户名name不能为空"
+		}
+	}
+
+	if errTxt != "" {
+		if env != "" {
+			println("errTxt Error: ", errTxt)
+			ctx.JSON(iris.Map{"data": allData, "code": "err debug", "msg": errTxt})
+		} else {
+			ctx.JSON(iris.Map{"code": config.ErrParamEmpty, "msg": config.ErrMsgs[config.ErrParamEmpty]})
+
+		}
+		return
+	}
+	name := allData["name"].(string)
+
+	// 查找用户 (使用username、email、cell、identity_card查找用户)
+	user, typeName, err := c.Models.Find(name)
+	if err != nil {
+		if env != "" {
+			println("Models.Find Error: ", err.Error())
+			ctx.JSON(iris.Map{"data": allData, "code": "err debug", "msg": err.Error()})
+		} else {
+			ctx.JSON(iris.Map{"code": config.ErrNoRecords, "msg": config.ErrMsgs[config.ErrNoRecords]})
+		}
+		return
+	}
+	println("typeName", typeName)
+
+	// 对手机号等敏感信息进行脱敏处理
+	cell := utils.MaskPhoneNumber(*user.Cell)
+	// 对邮箱进行脱敏处理
+	email := utils.MaskEmail(*user.Email)
+	// // 对身份证进行脱敏处理
+	// identityCard := utils.MaskIDCardNumber(*user.IdentityCard)
+
+	// 获取配置项
+	otherCfg := ctx.Application().ConfigurationReadOnly().GetOther()
+	exptime := otherCfg["SERV_SAFE_ETIME"].(int64)                          // 密保时间                         // 设置密保超时时间(秒)
+	smtpName := otherCfg["SMTP_FROM_NAME"].(string)                         // 发件人名称                        // 发件人名称
+	timeFormat := ctx.Application().ConfigurationReadOnly().GetTimeFormat() // # 时间格式TimeFormat配置项
+
+	duration := time.Duration(exptime) * time.Second // 将秒转为小时 不使用 /3600 的方式去计算
+	hours := duration.Hours()                        // 多少小时
+	now := time.Now()                                // 当前时间
+	expStr := now.Add(duration).Format(timeFormat)   // 格式化密保超时时间 2023-06-01 14:35:04
+	// // 用纯时间戳（毫秒）生成验证码code
+	// milli := fmt.Sprintf("%d", now.UnixMilli()) // 获取时间戳（毫秒） 1670919222532 类似于JS里的 Date.now()
+	// code := milli[len(milli)-6:]                // 取最后6位做为code验证码
+	// println(milli,"code验证码:", code)
+
+	// 用纯时间戳（毫秒）+5随机数  生成验证码code
+	milli := utils.GenerateTimerID(99999) // （13位时间戳+5随机尾数每位最大到9
+	code := milli[len(milli)-6:]          // 取最后6位做为code验证码
+	println(now.UnixMilli(), milli, "用纯时间戳（毫秒）+5随机数  生成验证码code:", code)
+	// 1719305088793 171930508879316643 用纯时间戳（毫秒）+5随机数  生成验证码code: 316643
+
+	secret := otherCfg["SERV_KEY_SECRET"].(string) + code // 验证码的特殊密钥
+	// 生成 token 返回给客户
+	token, _ := utils.GenerateToken(*user.UID, exptime, secret)
+
+	subject := fmt.Sprintf("[%s安全中心]密码找回服务", smtpName)
+	body := fmt.Sprintf("尊敬的%s用户您好：<br/>", smtpName)
+	body += fmt.Sprintf("您的用户名：%s<br/>", *user.UserName)
+	body += fmt.Sprintf("您的邮箱：%s<br/>", email)
+	body += fmt.Sprintf("您的电话：%s<br/>", cell)
+	// 将float64浮点只保留一位小数
+	body += fmt.Sprintf("请务必在<b>%.1f</b>小时内通过下面这个地址修改您的密码，此链接将在%s后失效！<br/><br/>", hours, expStr)
+	body += fmt.Sprintf("<b>您的的验证码: %s </b><br>", code)
+	body += fmt.Sprintf("<br/>%s安全中心 %s<br/>", smtpName, now.Format(timeFormat))
+
+	// println("邮件发送:", *user.Email)
+	// Go 并发线程 - 通过 go 关键字来开启 goroutine 即可
+	go utils.SendEmail(ctx, *user.Email, subject, body) // 邮件发送
+
+	ctx.JSON(iris.Map{"data": token, "code": 0, "msg": typeName})
 }
 
 // 手动指定哪个链接去执行哪个方法  - 自定义匹配
