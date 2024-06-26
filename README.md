@@ -1,4 +1,4 @@
-# 提笔记 - 肥客接口架构  Ver 3.0.5
+# 提笔记 - 肥客接口架构  Ver 3.1.0
 [![The Go Programming Language](https://img.shields.io/badge/Go-v1.20.5-green)](https://github.com/golang/go)
 [![Iris](https://img.shields.io/badge/Iris-v12.2.0-green)](https://github.com/kataras/iris)
 [![sqlx](https://img.shields.io/badge/sqlx-v1.3.5-green)](https://github.com/jmoiron/sqlx)
@@ -133,6 +133,19 @@ UPDATE myapp.tbj_notepad  SET `uid` = `referer` WHERE referer !='' AND referer  
 
 
 ```
+
+
+## 短信模版
+
+2196589	验证码  验证码为：{1}，您正在登录，若非本人操作，请勿泄露。
+
+1815541	生日提醒 [提笔记生日提醒]{1}{2}{3}岁生日
+
+1815543	纪念提醒 [提笔记纪念提醒]{1}{2}{3}周年纪念
+
+1815721	闹铃提醒 [提笔记闹铃提醒]{1}{2}闹铃
+
+
 
 ## 📄 文档地址
  [提笔记API接口文档接口文档](https://console-docs.apipost.cn/preview/24229f55dd876c3f/46b8e7c7322b8614)

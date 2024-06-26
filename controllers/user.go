@@ -1299,7 +1299,6 @@ func (c *UserController) PatchCaptcha() {
 			ctx.JSON(iris.Map{"data": allData, "code": "err debug", "msg": errTxt})
 		} else {
 			ctx.JSON(iris.Map{"code": config.ErrParamEmpty, "msg": config.ErrMsgs[config.ErrParamEmpty]})
-
 		}
 		return
 	}
@@ -1340,7 +1339,7 @@ func (c *UserController) PatchCaptcha() {
 	secret := otherCfg["SERV_KEY_SECRET"].(string) + code + ua // 验证码的特殊密钥
 	// 生成 token 返回给客户
 	token, _ := utils.GenerateToken(0, exptime, secret)
-	ctx.JSON(iris.Map{"data": token, "code": 0, "msg": typeName})
+	// ctx.JSON(iris.Map{"data": token, "code": 0, "msg": typeName})
 
 	if typeName == "email" {
 		subject := fmt.Sprintf("[%s]密码找回服务", smtpName)
@@ -1353,12 +1352,15 @@ func (c *UserController) PatchCaptcha() {
 		// println("邮件发送:", *user.Email)
 		// Go 并发线程 - 通过 go 关键字来开启 goroutine 即可
 		go utils.SendEmail(ctx, name, subject, body) // 邮件发送
-
+		ctx.JSON(iris.Map{"data": token, "code": 0, "msg": typeName})
 	} else if typeName == "cell" {
 		smsTemplateIds := otherCfg["SMS_TEMPLATE_IDS"].(string) // 短信模版ID 模板类别(0其它 1生日 2纪念日 3闹铃)
 		smsTemplate := strings.Split(smsTemplateIds, ",")       // 取配置中的SMS_TEMPLATE_IDS短信模版ID
 		//短信发送
 		go utils.SendSMS(ctx, name, smsTemplate[0], []string{code})
+		ctx.JSON(iris.Map{"data": token, "code": 0, "msg": typeName})
+	} else {
+		ctx.JSON(iris.Map{"code": config.ErrParamEmpty, "msg": config.ErrMsgs[config.ErrParamEmpty]})
 	}
 
 }
