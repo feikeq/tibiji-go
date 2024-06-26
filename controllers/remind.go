@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"strings"
 	"tibiji-go/config"
 	"tibiji-go/models"
 	"tibiji-go/utils"
@@ -141,7 +142,8 @@ func (c *RemindController) GetQueue() {
 
 	// 获取配置项
 	otherCfg := ctx.Application().ConfigurationReadOnly().GetOther()
-	servKeySecret := otherCfg["SERV_KEY_SECRET"].(string) // API高级密钥
+	servKeySecret := otherCfg["SERV_KEY_SECRET"].(string)   // API高级密钥
+	smsTemplateIds := otherCfg["SMS_TEMPLATE_IDS"].(string) // 短信模版ID 模板类别(0删除 1正常 2纪念日 3闹铃)
 
 	// 拿所有提交数据
 	allData := utils.AllDataToMap(ctx)
@@ -256,7 +258,8 @@ func (c *RemindController) GetQueue() {
 				// 判断是否有手机号
 				if phone != "" {
 					age := fmt.Sprintf("%d", value.RemindYear)
-					smsTemplate := [4]string{"0", "1815541", "1815543", "1815721"}
+					// smsTemplate := [4]string{"0", "1815541", "1815543", "1815721"}
+					smsTemplate := strings.Split(smsTemplateIds, ",") // 取配置中的SMS_TEMPLATE_IDS短信模版ID
 					//短信发送
 					errSms := utils.SendSMS(ctx, phone, smsTemplate[value.State], []string{value.RemindDay, value.Fullname, age})
 					if errSms != nil {
@@ -269,20 +272,20 @@ func (c *RemindController) GetQueue() {
 
 		println("---=-=-=-=--=-=-=-=-=------")
 		fmt.Println(newQueue)
-		// 存入缓存文件
+		// 格式化数据方便存入缓存文件
 		data, err := json.Marshal(newQueue)
 		if err != nil {
 			println("json.Marshal Error: ", err.Error())
 		}
 
-		// 将队列数据写入文件中
+		// 打开队列数据文件
 		file, err := os.Create(filePath)
 		if err != nil {
 			println("os.Create Error: ", err.Error())
 			panic(err)
 		}
 		defer file.Close()
-
+		// 将队列数据写入文件中
 		_, err = file.WriteString(string(data))
 		if err != nil {
 			println("file.WriteString Error: ", err.Error())
