@@ -369,9 +369,7 @@ func (c *UserController) Post() {
 			return
 		}
 
-		println("temp_uid", temp_uid)
-
-		return
+		println("验证通过为0的虚拟ID", temp_uid) // 继续往下执行
 	}
 
 	// 调取创建用户模型 - 返回新插入数据的id
@@ -379,7 +377,7 @@ func (c *UserController) Post() {
 	if err != nil {
 		if env != "" {
 			println("Models.Create Error: ", err.Error())
-			ctx.JSON(iris.Map{"data": allData, "code": "err debug", "msg": err.Error()})
+			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase], "_debug_carry": allData, "_debug_err": err.Error()})
 		} else {
 			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase]})
 		}

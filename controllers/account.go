@@ -80,7 +80,7 @@ func (c *AccountController) Get() {
 	if err != nil {
 		if env != "" {
 			println("Models.List Error: ", err.Error())
-			ctx.JSON(iris.Map{"data": allData, "code": "err debug", "msg": err.Error()})
+			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase], "_debug_carry": allData, "_debug_err": err.Error()})
 		} else {
 			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase]})
 		}
@@ -137,7 +137,7 @@ func (c *AccountController) Post() {
 	if err != nil {
 		if env != "" {
 			println("Models.Create Error: ", err.Error())
-			ctx.JSON(iris.Map{"data": allData, "code": "err debug", "msg": err.Error()})
+			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase], "_debug_carry": allData, "_debug_err": err.Error()})
 		} else {
 			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase]})
 		}
@@ -175,7 +175,7 @@ func (c *AccountController) PutBy(id int64) {
 	if err != nil {
 		if env != "" {
 			println("Models.Update Error: ", err.Error())
-			ctx.JSON(iris.Map{"data": allData, "code": "err debug", "msg": err.Error()})
+			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase], "_debug_carry": allData, "_debug_err": err.Error()})
 		} else {
 			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase]})
 		}
@@ -305,7 +305,7 @@ func (c *AccountController) DeleteBy(id int64) {
 	if err != nil {
 		if env != "" {
 			println("Models.Delete Error: ", err.Error())
-			ctx.JSON(iris.Map{"data": id, "code": "err debug", "msg": err.Error()})
+			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase], "_debug_carry": id, "_debug_err": err.Error()})
 		} else {
 			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase]})
 		}
@@ -370,7 +370,7 @@ func (c *AccountController) GetReportRatio() {
 	if err != nil {
 		if env != "" {
 			println("Models.ReportRatio Error: ", err.Error())
-			ctx.JSON(iris.Map{"data": tkUid, "code": "err debug", "msg": err.Error()})
+			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase], "_debug_carry": tkUid, "_debug_err": err.Error()})
 		} else {
 			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase]})
 		}
@@ -406,7 +406,7 @@ func (c *AccountController) GetReportRatios() {
 	if err != nil {
 		if env != "" {
 			println("Models.ReportRatio Error: ", err.Error())
-			ctx.JSON(iris.Map{"data": tkUid, "code": "err debug", "msg": err.Error()})
+			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase], "_debug_carry": tkUid, "_debug_err": err.Error()})
 		} else {
 			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase]})
 		}
@@ -455,7 +455,7 @@ func (c *AccountController) GetReportDetails() {
 	if err != nil {
 		if env != "" {
 			println("Models.ReportDetails Error: ", err.Error())
-			ctx.JSON(iris.Map{"data": tkUid, "code": "err debug", "msg": err.Error()})
+			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase], "_debug_carry": tkUid, "_debug_err": err.Error()})
 		} else {
 			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase]})
 		}
@@ -496,7 +496,7 @@ func (c *AccountController) GetReportAccounts() {
 	if err != nil {
 		if env != "" {
 			println("Models.ReportAccounts Error: ", err.Error())
-			ctx.JSON(iris.Map{"data": tkUid, "code": "err debug", "msg": err.Error()})
+			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase], "_debug_carry": tkUid, "_debug_err": err.Error()})
 		} else {
 			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase]})
 		}
@@ -525,7 +525,7 @@ func (c *AccountController) GetObjects() {
 	if err != nil {
 		if env != "" {
 			println("Models.Objects Error: ", err.Error())
-			ctx.JSON(iris.Map{"data": tkUid, "code": "err debug", "msg": err.Error()})
+			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase], "_debug_carry": tkUid, "_debug_err": err.Error()})
 		} else {
 			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase]})
 		}
