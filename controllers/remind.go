@@ -52,7 +52,7 @@ func (c *RemindController) Get() {
 	if err != nil {
 		if env != "" {
 			println("Models.Items Error: ", err.Error())
-			ctx.JSON(iris.Map{"data": allData, "code": "err debug", "msg": err.Error()})
+			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase], "_debug_carry": allData, "_debug_err": err.Error()})
 		} else {
 			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase]})
 		}
@@ -98,7 +98,7 @@ func (c *RemindController) GetTask() {
 	if err != nil {
 		if env != "" {
 			println("Models.Task Error: ", err.Error())
-			ctx.JSON(iris.Map{"data": allData, "code": "err debug", "msg": err.Error()})
+			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase], "_debug_carry": allData, "_debug_err": err.Error()})
 		} else {
 			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase]})
 		}

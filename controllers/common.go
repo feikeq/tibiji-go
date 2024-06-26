@@ -155,7 +155,7 @@ func (c *CommonController) GetTestmsg(ctx iris.Context) {
 	if errTxt != "" {
 		if env != "" {
 			println("errTxt Error: ", errTxt)
-			ctx.JSON(iris.Map{"data": allData, "code": "err debug", "msg": errTxt})
+			ctx.JSON(iris.Map{"code": config.ErrParamEmpty, "msg": config.ErrMsgs[config.ErrParamEmpty], "_debug_carry": allData, "_debug_err": errTxt})
 		} else {
 			ctx.JSON(iris.Map{"code": config.ErrParamEmpty, "msg": config.ErrMsgs[config.ErrParamEmpty]})
 

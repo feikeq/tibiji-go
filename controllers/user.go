@@ -273,7 +273,7 @@ func (c *UserController) Get() {
 	if err != nil {
 		if env != "" {
 			println("Models.List Error: ", err.Error())
-			ctx.JSON(iris.Map{"data": allData, "code": "err debug", "msg": err.Error()})
+			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase], "_debug_carry": allData, "_debug_err": err.Error()})
 		} else {
 			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase]})
 		}
@@ -346,7 +346,7 @@ func (c *UserController) Post() {
 		if errTxt != "" {
 			if env != "" {
 				println("errTxt Error: ", errTxt)
-				ctx.JSON(iris.Map{"data": allData, "code": "err debug", "msg": errTxt})
+				ctx.JSON(iris.Map{"code": config.ErrParamEmpty, "msg": config.ErrMsgs[config.ErrParamEmpty], "_debug_carry": allData, "_debug_err": errTxt})
 			} else {
 				ctx.JSON(iris.Map{"code": config.ErrParamEmpty, "msg": config.ErrMsgs[config.ErrParamEmpty]})
 
@@ -391,7 +391,7 @@ func (c *UserController) Post() {
 	if errM != nil {
 		if env != "" {
 			println("Models.CreateMaterial Error: ", errM.Error())
-			ctx.JSON(iris.Map{"data": uid, "code": "err debug", "msg": errM.Error()})
+			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase], "_debug_carry": uid, "_debug_err": errM.Error()})
 		} else {
 			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase]})
 		}
@@ -434,7 +434,7 @@ func (c *UserController) GetBy(id int64) {
 	if err != nil {
 		if env != "" {
 			println("Models.Read Error: ", err.Error())
-			ctx.JSON(iris.Map{"data": id, "code": "err debug", "msg": err.Error()})
+			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase], "_debug_carry": id, "_debug_err": err.Error()})
 		} else {
 			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase]})
 		}
@@ -534,7 +534,7 @@ func (c *UserController) PutBy(id int64) {
 	if err != nil {
 		if env != "" {
 			println("Models.Update Error: ", err.Error())
-			ctx.JSON(iris.Map{"data": allData, "code": "err debug", "msg": err.Error()})
+			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase], "_debug_carry": allData, "_debug_err": err.Error()})
 		} else {
 			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase]})
 		}
@@ -575,7 +575,7 @@ func (c *UserController) DeleteBy(id int64) {
 	if err != nil {
 		if env != "" {
 			println("Models.Delete Error: ", err.Error())
-			ctx.JSON(iris.Map{"data": id, "code": "err debug", "msg": err.Error()})
+			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase], "_debug_carry": id, "_debug_err": err.Error()})
 		} else {
 			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase]})
 		}
@@ -616,7 +616,7 @@ func (c *UserController) GetByMaterial(id int64) {
 	if err != nil {
 		if env != "" {
 			println("Models.ReadMaterial Error: ", err.Error())
-			ctx.JSON(iris.Map{"data": id, "code": "err debug", "msg": err.Error()})
+			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase], "_debug_carry": id, "_debug_err": err.Error()})
 		} else {
 			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase]})
 		}
@@ -687,7 +687,7 @@ func (c *UserController) PatchBy(id int64) {
 			if err != nil {
 				if env != "" {
 					println("Models.Read Error: ", err.Error())
-					ctx.JSON(iris.Map{"data": id, "code": "err debug", "msg": err.Error()})
+					ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase], "_debug_carry": id, "_debug_err": err.Error()})
 				} else {
 					ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase]})
 				}
@@ -749,7 +749,7 @@ func (c *UserController) PatchBy(id int64) {
 	if err != nil {
 		if env != "" {
 			println("Models.Update Error: ", err.Error())
-			ctx.JSON(iris.Map{"data": allData, "code": "err debug", "msg": err.Error()})
+			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase], "_debug_carry": allData, "_debug_err": err.Error()})
 		} else {
 			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase]})
 		}
@@ -768,7 +768,7 @@ func (c *UserController) PatchBy(id int64) {
 	if log != nil {
 		if env != "" {
 			println("Models.SetLogs Error: ", err.Error())
-			ctx.JSON(iris.Map{"data": logData, "code": "err debug", "msg": err.Error()})
+			ctx.JSON(iris.Map{"data": key, "code": 0, "msg": "操作成功但日志记录失败", "_debug_carry": logData, "_debug_err": err.Error()})
 			return
 		}
 	}
@@ -814,7 +814,7 @@ func (c *UserController) PostLogin() {
 	if errTxt != "" {
 		if env != "" {
 			println("errTxt Error: ", errTxt)
-			ctx.JSON(iris.Map{"data": allData, "code": "err debug", "msg": errTxt})
+			ctx.JSON(iris.Map{"code": config.ErrParamEmpty, "msg": config.ErrMsgs[config.ErrParamEmpty], "_debug_carry": allData, "_debug_err": errTxt})
 		} else {
 			ctx.JSON(iris.Map{"code": config.ErrParamEmpty, "msg": config.ErrMsgs[config.ErrParamEmpty]})
 
@@ -830,7 +830,7 @@ func (c *UserController) PostLogin() {
 	if err != nil {
 		if env != "" {
 			println("Models.Find Error: ", err.Error())
-			ctx.JSON(iris.Map{"data": allData, "code": "err debug", "msg": err.Error()})
+			ctx.JSON(iris.Map{"code": config.ErrValidation, "msg": config.ErrMsgs[config.ErrValidation], "_debug_carry": allData, "_debug_err": err.Error()})
 		} else {
 			ctx.JSON(iris.Map{"code": config.ErrValidation, "msg": config.ErrMsgs[config.ErrValidation]})
 		}
@@ -841,7 +841,7 @@ func (c *UserController) PostLogin() {
 	if *user.State == 2 {
 		if env != "" {
 			println("帐号还未激活")
-			ctx.JSON(iris.Map{"data": allData, "code": "err debug", "msg": "帐号还未激活"})
+			ctx.JSON(iris.Map{"code": config.ErrNoPermission, "msg": config.ErrMsgs[config.ErrNoPermission], "_debug_carry": allData, "_debug_err": "帐号还未激活"})
 		} else {
 			ctx.JSON(iris.Map{"code": config.ErrNoPermission, "msg": config.ErrMsgs[config.ErrNoPermission]})
 		}
@@ -849,7 +849,7 @@ func (c *UserController) PostLogin() {
 	} else if *user.State == 0 {
 		if env != "" {
 			println("帐号已被禁用")
-			ctx.JSON(iris.Map{"data": allData, "code": "err debug", "msg": "帐号已被禁用"})
+			ctx.JSON(iris.Map{"code": config.ErrUserDisabled, "msg": config.ErrMsgs[config.ErrUserDisabled], "_debug_carry": allData, "_debug_err": "帐号已被禁用"})
 		} else {
 			ctx.JSON(iris.Map{"code": config.ErrUserDisabled, "msg": config.ErrMsgs[config.ErrUserDisabled]})
 		}
@@ -868,7 +868,7 @@ func (c *UserController) PostLogin() {
 	if dbPwd != inPwd {
 		if env != "" {
 			println("密码错误")
-			ctx.JSON(iris.Map{"data": allData, "code": "err debug", "msg": "密码错误"})
+			ctx.JSON(iris.Map{"code": config.ErrValidation, "msg": config.ErrMsgs[config.ErrValidation], "_debug_carry": allData, "_debug_err": "密码错误"})
 		} else {
 			ctx.JSON(iris.Map{"code": config.ErrValidation, "msg": config.ErrMsgs[config.ErrValidation]})
 		}
@@ -928,7 +928,7 @@ func (c *UserController) PostLogin() {
 	if log != nil {
 		if env != "" {
 			println("Models.SetLogs Error: ", err.Error())
-			ctx.JSON(iris.Map{"data": logData, "code": "err debug", "msg": err.Error()})
+			ctx.JSON(iris.Map{"data": result, "code": 0, "msg": "操作成功但日志记录失败", "_debug_carry": logData, "_debug_err": err.Error()})
 			return
 		}
 	}
@@ -993,7 +993,7 @@ func (c *UserController) GetLogs() {
 	if err != nil {
 		if env != "" {
 			println("Models.GetLogs Error: ", err.Error())
-			ctx.JSON(iris.Map{"data": allData, "code": "err debug", "msg": err.Error()})
+			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase], "_debug_carry": allData, "_debug_err": err.Error()})
 		} else {
 			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase]})
 		}
@@ -1042,7 +1042,7 @@ func (c *UserController) GetPassword() {
 	if errTxt != "" {
 		if env != "" {
 			println("errTxt Error: ", errTxt)
-			ctx.JSON(iris.Map{"data": allData, "code": "err debug", "msg": errTxt})
+			ctx.JSON(iris.Map{"code": config.ErrParamEmpty, "msg": config.ErrMsgs[config.ErrParamEmpty], "_debug_carry": allData, "_debug_err": errTxt})
 		} else {
 			ctx.JSON(iris.Map{"code": config.ErrParamEmpty, "msg": config.ErrMsgs[config.ErrParamEmpty]})
 
@@ -1056,7 +1056,7 @@ func (c *UserController) GetPassword() {
 	if err != nil {
 		if env != "" {
 			println("Models.Find Error: ", err.Error())
-			ctx.JSON(iris.Map{"data": allData, "code": "err debug", "msg": err.Error()})
+			ctx.JSON(iris.Map{"code": config.ErrNoRecords, "msg": config.ErrMsgs[config.ErrNoRecords], "_debug_carry": allData, "_debug_err": err.Error()})
 		} else {
 			ctx.JSON(iris.Map{"code": config.ErrNoRecords, "msg": config.ErrMsgs[config.ErrNoRecords]})
 		}
@@ -1173,7 +1173,7 @@ func (c *UserController) PostPassword() {
 	if errTxt != "" {
 		if env != "" {
 			println("errTxt Error: ", errTxt)
-			ctx.JSON(iris.Map{"data": allData, "code": "err debug", "msg": errTxt})
+			ctx.JSON(iris.Map{"code": config.ErrParamEmpty, "msg": config.ErrMsgs[config.ErrParamEmpty], "_debug_carry": allData, "_debug_err": errTxt})
 		} else {
 			ctx.JSON(iris.Map{"code": config.ErrParamEmpty, "msg": config.ErrMsgs[config.ErrParamEmpty]})
 
@@ -1202,7 +1202,7 @@ func (c *UserController) PostPassword() {
 	if err != nil {
 		if env != "" {
 			println("Models.Read Error: ", err.Error())
-			ctx.JSON(iris.Map{"data": allData, "code": "err debug", "msg": err.Error()})
+			ctx.JSON(iris.Map{"code": config.ErrNoRecords, "msg": config.ErrMsgs[config.ErrNoRecords], "_debug_carry": allData, "_debug_err": err.Error()})
 		} else {
 			ctx.JSON(iris.Map{"code": config.ErrNoRecords, "msg": config.ErrMsgs[config.ErrNoRecords]})
 		}
@@ -1223,7 +1223,7 @@ func (c *UserController) PostPassword() {
 	if upErr != nil {
 		if env != "" {
 			println("Models.Update Error: ", upErr.Error())
-			ctx.JSON(iris.Map{"data": allData, "code": "err debug", "msg": upErr.Error()})
+			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase], "_debug_carry": allData, "_debug_err": upErr.Error()})
 		} else {
 			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase]})
 		}
@@ -1242,7 +1242,7 @@ func (c *UserController) PostPassword() {
 	if log != nil {
 		if env != "" {
 			println("Models.SetLogs Error: ", err.Error())
-			ctx.JSON(iris.Map{"data": logData, "code": "err debug", "msg": err.Error()})
+			ctx.JSON(iris.Map{"code": 0, "msg": "操作成功但日志记录失败", "_debug_carry": logData, "_debug_err": err.Error()})
 			return
 		}
 	}
@@ -1294,7 +1294,7 @@ func (c *UserController) PatchCaptcha() {
 	if errTxt != "" {
 		if env != "" {
 			println("errTxt Error: ", errTxt)
-			ctx.JSON(iris.Map{"data": allData, "code": "err debug", "msg": errTxt})
+			ctx.JSON(iris.Map{"code": config.ErrParamEmpty, "msg": config.ErrMsgs[config.ErrParamEmpty], "_debug_carry": allData, "_debug_err": errTxt})
 		} else {
 			ctx.JSON(iris.Map{"code": config.ErrParamEmpty, "msg": config.ErrMsgs[config.ErrParamEmpty]})
 		}

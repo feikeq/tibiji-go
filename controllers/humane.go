@@ -59,7 +59,7 @@ func (c *HumaneController) Get() {
 	if err != nil {
 		if env != "" {
 			println("Models.Items Error: ", err.Error())
-			ctx.JSON(iris.Map{"data": allData, "code": "err debug", "msg": err.Error()})
+			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase], "_debug_carry": allData, "_debug_err": err.Error()})
 		} else {
 			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase]})
 		}
@@ -113,7 +113,7 @@ func (c *HumaneController) GetReportRatio() {
 	if err != nil {
 		if env != "" {
 			println("Models.ReportRatio Error: ", err.Error())
-			ctx.JSON(iris.Map{"data": tkUid, "code": "err debug", "msg": err.Error()})
+			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase], "_debug_carry": tkUid, "_debug_err": err.Error()})
 		} else {
 			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase]})
 		}
@@ -142,7 +142,7 @@ func (c *HumaneController) GetReportTop() {
 	if err != nil {
 		if env != "" {
 			println("Models.ReportTop Error: ", err.Error())
-			ctx.JSON(iris.Map{"data": tkUid, "code": "err debug", "msg": err.Error()})
+			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase], "_debug_carry": tkUid, "_debug_err": err.Error()})
 		} else {
 			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase]})
 		}

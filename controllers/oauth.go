@@ -153,7 +153,7 @@ func (c *OauthController) Post() {
 	if err != nil {
 		if env != "" {
 			println("Models.CreateOAuth Error: ", err.Error())
-			ctx.JSON(iris.Map{"data": allData, "code": "err debug", "msg": err.Error()})
+			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase], "_debug_carry": allData, "_debug_err": err.Error()})
 		} else {
 			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase]})
 		}
@@ -168,7 +168,7 @@ func (c *OauthController) Post() {
 		if err != nil {
 			if env != "" {
 				println("Models.Read Error: ", err.Error())
-				ctx.JSON(iris.Map{"data": allData, "code": "err debug", "msg": err.Error()})
+				ctx.JSON(iris.Map{"code": config.ErrNoRecords, "msg": config.ErrMsgs[config.ErrNoRecords], "_debug_carry": allData, "_debug_err": err.Error()})
 			} else {
 				ctx.JSON(iris.Map{"code": config.ErrNoRecords, "msg": config.ErrMsgs[config.ErrNoRecords]})
 			}
@@ -179,7 +179,7 @@ func (c *OauthController) Post() {
 		if *user.State == 2 {
 			if env != "" {
 				println("帐号还未激活")
-				ctx.JSON(iris.Map{"data": allData, "code": "err debug", "msg": "帐号还未激活"})
+				ctx.JSON(iris.Map{"code": config.ErrNoPermission, "msg": config.ErrMsgs[config.ErrNoPermission], "_debug_carry": allData, "_debug_err": "帐号还未激活"})
 			} else {
 				ctx.JSON(iris.Map{"code": config.ErrNoPermission, "msg": config.ErrMsgs[config.ErrNoPermission]})
 			}
@@ -187,7 +187,7 @@ func (c *OauthController) Post() {
 		} else if *user.State == 0 {
 			if env != "" {
 				println("帐号已被禁用")
-				ctx.JSON(iris.Map{"data": allData, "code": "err debug", "msg": "帐号已被禁用"})
+				ctx.JSON(iris.Map{"code": config.ErrUserDisabled, "msg": config.ErrMsgs[config.ErrUserDisabled], "_debug_carry": allData, "_debug_err": "帐号已被禁用"})
 			} else {
 				ctx.JSON(iris.Map{"code": config.ErrUserDisabled, "msg": config.ErrMsgs[config.ErrUserDisabled]})
 			}
@@ -247,7 +247,7 @@ func (c *OauthController) Post() {
 		if log != nil {
 			if env != "" {
 				println("Models.SetLogs Error: ", err.Error())
-				ctx.JSON(iris.Map{"data": logData, "code": "err debug", "msg": err.Error()})
+				ctx.JSON(iris.Map{"data": result, "code": 0, "msg": "操作成功但日志记录失败", "_debug_carry": logData, "_debug_err": err.Error()})
 				return
 			}
 		}
@@ -298,7 +298,7 @@ func (c *OauthController) Put() {
 	if err != nil {
 		if env != "" {
 			println("Models.FindOAuthOid Error: ", err.Error())
-			ctx.JSON(iris.Map{"data": allData, "code": "err debug", "msg": err.Error()})
+			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase], "_debug_carry": allData, "_debug_err": err.Error()})
 		} else {
 			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase]})
 		}
@@ -318,7 +318,7 @@ func (c *OauthController) Put() {
 	if err != nil {
 		if env != "" {
 			println("Models.UpdateOAuth Error: ", err.Error())
-			ctx.JSON(iris.Map{"data": allData, "code": "err debug", "msg": err.Error()})
+			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase], "_debug_carry": allData, "_debug_err": err.Error()})
 		} else {
 			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase]})
 		}
@@ -337,7 +337,7 @@ func (c *OauthController) Put() {
 	if log != nil {
 		if env != "" {
 			println("Models.SetLogs Error: ", err.Error())
-			ctx.JSON(iris.Map{"data": logData, "code": "err debug", "msg": err.Error()})
+			ctx.JSON(iris.Map{"data": row, "code": 0, "msg": "操作成功但日志记录失败", "_debug_carry": logData, "_debug_err": err.Error()})
 			return
 		}
 	}
@@ -382,7 +382,7 @@ func (c *OauthController) Delete() {
 	if err != nil {
 		if env != "" {
 			println("Models.FindOAuthOid Error: ", err.Error())
-			ctx.JSON(iris.Map{"data": allData, "code": "err debug", "msg": err.Error()})
+			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase], "_debug_carry": allData, "_debug_err": err.Error()})
 		} else {
 			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase]})
 		}
@@ -402,7 +402,7 @@ func (c *OauthController) Delete() {
 	if err != nil {
 		if env != "" {
 			println("Models.UpdateOAuth Error: ", err.Error())
-			ctx.JSON(iris.Map{"data": allData, "code": "err debug", "msg": err.Error()})
+			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase], "_debug_carry": allData, "_debug_err": err.Error()})
 		} else {
 			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase]})
 		}
@@ -421,7 +421,7 @@ func (c *OauthController) Delete() {
 	if log != nil {
 		if env != "" {
 			println("Models.SetLogs Error: ", err.Error())
-			ctx.JSON(iris.Map{"data": logData, "code": "err debug", "msg": err.Error()})
+			ctx.JSON(iris.Map{"data": row, "code": 0, "msg": "操作成功但日志记录失败", "_debug_carry": logData, "_debug_err": err.Error()})
 			return
 		}
 	}
@@ -585,7 +585,7 @@ func (c *OauthController) AllWxBy(code string) {
 	if err != nil {
 		if env != "" {
 			println("Models.CreateOAuth Error: ", err.Error())
-			ctx.JSON(iris.Map{"data": oauthData, "code": "err debug", "msg": err.Error()})
+			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase], "_debug_carry": oauthData, "_debug_err": err.Error()})
 		} else {
 			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase]})
 		}
