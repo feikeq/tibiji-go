@@ -143,7 +143,7 @@ func (c *RemindController) GetQueue() {
 	// 获取配置项
 	otherCfg := ctx.Application().ConfigurationReadOnly().GetOther()
 	servKeySecret := otherCfg["SERV_KEY_SECRET"].(string)   // API高级密钥
-	smsTemplateIds := otherCfg["SMS_TEMPLATE_IDS"].(string) // 短信模版ID 模板类别(0删除 1正常 2纪念日 3闹铃)
+	smsTemplateIds := otherCfg["SMS_TEMPLATE_IDS"].(string) // 短信模版ID 模板类别(0其它 1生日 2纪念日 3闹铃)
 
 	// 拿所有提交数据
 	allData := utils.AllDataToMap(ctx)

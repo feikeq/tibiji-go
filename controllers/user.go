@@ -16,6 +16,7 @@ import (
 	// Go的标准库包含了大量的包（如：fmt 和 os）
 
 	"fmt"
+	"strings"
 	"time"
 
 	// 本项目自己的包
@@ -354,7 +355,8 @@ func (c *UserController) Post() {
 		}
 		ticket := allData["ticket"].(string)
 		code := allData["code"].(string)
-		secret := otherCfg["SERV_KEY_SECRET"].(string) + code // 验证码的特殊密钥
+		ua := ctx.GetHeader("User-Agent")                          // 拿到UA信息User-Agent
+		secret := otherCfg["SERV_KEY_SECRET"].(string) + code + ua // 验证码的特殊密钥
 
 		println(ticket, code, secret)
 
@@ -368,6 +370,8 @@ func (c *UserController) Post() {
 		}
 
 		println("temp_uid", temp_uid)
+
+		return
 	}
 
 	// 调取创建用户模型 - 返回新插入数据的id
@@ -1060,7 +1064,7 @@ func (c *UserController) GetPassword() {
 		}
 		return
 	}
-	println("typeName", typeName)
+	// println("typeName", typeName)
 
 	// 对手机号等敏感信息进行脱敏处理
 	cell := utils.MaskPhoneNumber(*user.Cell)
@@ -1094,21 +1098,32 @@ func (c *UserController) GetPassword() {
 	// 生成 token 返回给客户
 	token, _ := utils.GenerateToken(*user.UID, exptime, secret)
 
-	subject := fmt.Sprintf("[%s安全中心]密码找回服务", smtpName)
-	body := fmt.Sprintf("尊敬的%s用户您好：<br/>", smtpName)
-	body += fmt.Sprintf("您的用户名：%s<br/>", *user.UserName)
-	body += fmt.Sprintf("您的邮箱：%s<br/>", email)
-	body += fmt.Sprintf("您的电话：%s<br/>", cell)
-	// 将float64浮点只保留一位小数
-	body += fmt.Sprintf("请务必在<b>%.1f</b>小时内通过下面这个地址修改您的密码，此链接将在%s后失效！<br/><br/>", hours, expStr)
-	body += fmt.Sprintf("<b>您的的验证码: %s </b><br>", code)
-	body += fmt.Sprintf("<br/>%s安全中心 %s<br/>", smtpName, now.Format(timeFormat))
-
-	// println("邮件发送:", *user.Email)
-	// Go 并发线程 - 通过 go 关键字来开启 goroutine 即可
-	go utils.SendEmail(ctx, *user.Email, subject, body) // 邮件发送
-
 	ctx.JSON(iris.Map{"data": token, "code": 0, "msg": typeName})
+
+	if email != "" {
+		subject := fmt.Sprintf("[%s安全中心]密码找回服务", smtpName)
+		body := fmt.Sprintf("尊敬的%s用户您好：<br/>", smtpName)
+		body += fmt.Sprintf("您的用户名：%s<br/>", *user.UserName)
+		body += fmt.Sprintf("您的邮箱：%s<br/>", email)
+		body += fmt.Sprintf("您的电话：%s<br/>", cell)
+		// 将float64浮点只保留一位小数
+		body += fmt.Sprintf("请务必在<b>%.1f</b>小时内通过下面这个地址修改您的密码，此链接将在%s后失效！<br/><br/>", hours, expStr)
+		body += fmt.Sprintf("<b>您的的验证码: %s </b><br>", code)
+		body += fmt.Sprintf("<br/>%s安全中心 %s<br/>", smtpName, now.Format(timeFormat))
+
+		// println("邮件发送:", *user.Email)
+		// Go 并发线程 - 通过 go 关键字来开启 goroutine 即可
+		go utils.SendEmail(ctx, *user.Email, subject, body) // 邮件发送
+	}
+
+	if cell != "" {
+		smsTemplateIds := otherCfg["SMS_TEMPLATE_IDS"].(string) // 短信模版ID 模板类别(0其它 1生日 2纪念日 3闹铃)
+		smsTemplate := strings.Split(smsTemplateIds, ",")       // 取配置中的SMS_TEMPLATE_IDS短信模版ID
+		//短信发送
+		go utils.SendSMS(ctx, *user.Cell, smsTemplate[0], []string{code})
+
+	}
+
 }
 
 // 找回密码后设置新密码 POST:/user/password
@@ -1290,25 +1305,15 @@ func (c *UserController) PatchCaptcha() {
 	}
 	name := allData["name"].(string)
 
-	// 查找用户 (使用username、email、cell、identity_card查找用户)
-	user, typeName, err := c.Models.Find(name)
-	if err != nil {
-		if env != "" {
-			println("Models.Find Error: ", err.Error())
-			ctx.JSON(iris.Map{"data": allData, "code": "err debug", "msg": err.Error()})
-		} else {
-			ctx.JSON(iris.Map{"code": config.ErrNoRecords, "msg": config.ErrMsgs[config.ErrNoRecords]})
-		}
-		return
+	// 判断类型
+	typeName := "username"
+	if utils.CheckEmail(name) {
+		typeName = "email"
+	} else if utils.CheckMobile(name) {
+		typeName = "cell"
+	} else if utils.CheckIdCard(name) {
+		typeName = "identity_card"
 	}
-	println("typeName", typeName)
-
-	// 对手机号等敏感信息进行脱敏处理
-	cell := utils.MaskPhoneNumber(*user.Cell)
-	// 对邮箱进行脱敏处理
-	email := utils.MaskEmail(*user.Email)
-	// // 对身份证进行脱敏处理
-	// identityCard := utils.MaskIDCardNumber(*user.IdentityCard)
 
 	// 获取配置项
 	otherCfg := ctx.Application().ConfigurationReadOnly().GetOther()
@@ -1331,25 +1336,37 @@ func (c *UserController) PatchCaptcha() {
 	println(now.UnixMilli(), milli, "用纯时间戳（毫秒）+5随机数  生成验证码code:", code)
 	// 1719305088793 171930508879316643 用纯时间戳（毫秒）+5随机数  生成验证码code: 316643
 
-	secret := otherCfg["SERV_KEY_SECRET"].(string) + code // 验证码的特殊密钥
+	ua := ctx.GetHeader("User-Agent")                          // 拿到UA信息User-Agent
+	secret := otherCfg["SERV_KEY_SECRET"].(string) + code + ua // 验证码的特殊密钥
 	// 生成 token 返回给客户
-	token, _ := utils.GenerateToken(*user.UID, exptime, secret)
+	token, _ := utils.GenerateToken(0, exptime, secret)
 
-	subject := fmt.Sprintf("[%s安全中心]密码找回服务", smtpName)
-	body := fmt.Sprintf("尊敬的%s用户您好：<br/>", smtpName)
-	body += fmt.Sprintf("您的用户名：%s<br/>", *user.UserName)
-	body += fmt.Sprintf("您的邮箱：%s<br/>", email)
-	body += fmt.Sprintf("您的电话：%s<br/>", cell)
-	// 将float64浮点只保留一位小数
-	body += fmt.Sprintf("请务必在<b>%.1f</b>小时内通过下面这个地址修改您的密码，此链接将在%s后失效！<br/><br/>", hours, expStr)
-	body += fmt.Sprintf("<b>您的的验证码: %s </b><br>", code)
-	body += fmt.Sprintf("<br/>%s安全中心 %s<br/>", smtpName, now.Format(timeFormat))
+	if typeName == "email" {
+		subject := fmt.Sprintf("[%s]密码找回服务", smtpName)
+		body := fmt.Sprintf("尊敬的%s用户您好：<br/>", smtpName)
+		// 将float64浮点只保留一位小数
+		body += fmt.Sprintf("请务必在<b>%.1f</b>小时内通过验证，验证码将在%s后失效！<br/><br/>", hours, expStr)
+		body += fmt.Sprintf("<b>您的的验证码: %s </b><br>", code)
+		body += fmt.Sprintf("<br/>%s %s<br/>", smtpName, now.Format(timeFormat))
 
-	// println("邮件发送:", *user.Email)
-	// Go 并发线程 - 通过 go 关键字来开启 goroutine 即可
-	go utils.SendEmail(ctx, *user.Email, subject, body) // 邮件发送
+		// println("邮件发送:", *user.Email)
+		// Go 并发线程 - 通过 go 关键字来开启 goroutine 即可
+		go utils.SendEmail(ctx, name, subject, body) // 邮件发送
+
+	} else if typeName == "cell" {
+		smsTemplateIds := otherCfg["SMS_TEMPLATE_IDS"].(string) // 短信模版ID 模板类别(0其它 1生日 2纪念日 3闹铃)
+		smsTemplate := strings.Split(smsTemplateIds, ",")       // 取配置中的SMS_TEMPLATE_IDS短信模版ID
+		//短信发送
+		errSms := utils.SendSMS(ctx, name, smsTemplate[0], []string{code})
+		if errSms != nil {
+			println("SendSMS ERR:", errSms.Error())
+			ctx.JSON(iris.Map{"code": config.ErrUnknown, "msg": config.ErrMsgs[config.ErrUnknown]})
+			return
+		}
+	}
 
 	ctx.JSON(iris.Map{"data": token, "code": 0, "msg": typeName})
+	println("ooookkkkk", 1)
 }
 
 // 手动指定哪个链接去执行哪个方法  - 自定义匹配

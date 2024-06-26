@@ -223,8 +223,10 @@ func (c *CommonController) GetTestmsg(ctx iris.Context) {
 	}
 
 	if phone != "" {
+		smsTemplateIds := otherCfg["SMS_TEMPLATE_IDS"].(string) // 短信模版ID 模板类别(0其它 1生日 2纪念日 3闹铃)
+		smsTemplate := strings.Split(smsTemplateIds, ",")       // 取配置中的SMS_TEMPLATE_IDS短信模版ID
 		//短信发送
-		errSms := utils.SendSMS(ctx, phone, "1815541", []string{"今天", "张惠妹", "22"})
+		errSms := utils.SendSMS(ctx, phone, smsTemplate[1], []string{"今天", "张惠妹", "22"})
 		if errSms != nil {
 			println("SendSMS ERR:", errSms.Error())
 			ctx.JSON(iris.Map{"code": config.ErrUnknown, "msg": config.ErrMsgs[config.ErrUnknown]})
