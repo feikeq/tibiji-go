@@ -1340,6 +1340,7 @@ func (c *UserController) PatchCaptcha() {
 	secret := otherCfg["SERV_KEY_SECRET"].(string) + code + ua // 验证码的特殊密钥
 	// 生成 token 返回给客户
 	token, _ := utils.GenerateToken(0, exptime, secret)
+	ctx.JSON(iris.Map{"data": token, "code": 0, "msg": typeName})
 
 	if typeName == "email" {
 		subject := fmt.Sprintf("[%s]密码找回服务", smtpName)
@@ -1357,16 +1358,9 @@ func (c *UserController) PatchCaptcha() {
 		smsTemplateIds := otherCfg["SMS_TEMPLATE_IDS"].(string) // 短信模版ID 模板类别(0其它 1生日 2纪念日 3闹铃)
 		smsTemplate := strings.Split(smsTemplateIds, ",")       // 取配置中的SMS_TEMPLATE_IDS短信模版ID
 		//短信发送
-		errSms := utils.SendSMS(ctx, name, smsTemplate[0], []string{code})
-		if errSms != nil {
-			println("SendSMS ERR:", errSms.Error())
-			ctx.JSON(iris.Map{"code": config.ErrUnknown, "msg": config.ErrMsgs[config.ErrUnknown]})
-			return
-		}
+		go utils.SendSMS(ctx, name, smsTemplate[0], []string{code})
 	}
 
-	ctx.JSON(iris.Map{"data": token, "code": 0, "msg": typeName})
-	println("ooookkkkk", 1)
 }
 
 // 手动指定哪个链接去执行哪个方法  - 自定义匹配

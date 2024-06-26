@@ -171,6 +171,7 @@ func SendSMS(ctx iris.Context, phone, templateId string, templateArgs []string) 
 		// UnauthorizedOperation.SmsSdkAppIdVerifyFail  SmsSdkAppId 校验失败，请检查 SmsSdkAppId 是否属于 云API密钥 的关联账户。
 		// FailedOperation.FailResolvePacket	请求包解析失败，通常情况下是由于没有遵守 API 接口说明规范导致的，请参考 请求包体解析1004错误详解。
 		// FailedOperation.SignatureIncorrectOrUnapproved	签名未审批或格式错误。（1）可登录 短信控制台，核查签名是否已审批并且审批通过；（2）核查是否符合格式规范，签名只能由中英文、数字组成，要求2 - 12个字，若存在疑问可联系 腾讯云短信小助手。
+		println("tencentcloud sms ERR:", err.Error())
 		return err
 	}
 	if err != nil {
