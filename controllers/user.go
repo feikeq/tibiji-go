@@ -319,7 +319,7 @@ func (c *UserController) Post() {
 
 	// 获取配置项
 	otherCfg := ctx.Application().ConfigurationReadOnly().GetOther()
-	isCheck := otherCfg["SERV_REGISTER_CHECK"].(bool) // 是否验证注册
+	isCheck := otherCfg["SERV_OPEN_CHECK"].(bool) // 是否开启验证(登录注册是否验证)
 	fmt.Printf("isCheck变量类型type: %T, 变量的值value: %v\n", isCheck, isCheck)
 	if isCheck {
 
