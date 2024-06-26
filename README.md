@@ -135,7 +135,7 @@ UPDATE myapp.tbj_notepad  SET `uid` = `referer` WHERE referer !='' AND referer  
 ```
 
 
-## 短信模版
+## 🧩 短信模版
 
 2196589	验证码  验证码为：{1}，您正在登录，若非本人操作，请勿泄露。
 
