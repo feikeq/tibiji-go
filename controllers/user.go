@@ -315,6 +315,17 @@ func (c *UserController) Post() {
 	// 客户端IP地址
 	allData["regip"] = utils.GetRealIP(ctx)
 
+	// 通过用户名判断类型并更新相应的数据字段
+	username := allData["username"].(string)
+	// 判断类型
+	if utils.CheckEmail(username) {
+		allData["email"] = username
+	} else if utils.CheckMobile(username) {
+		allData["cell"] = username
+	} else if utils.CheckIdCard(username) {
+		allData["identity_card"] = username
+	}
+
 	// fmt.Printf("变量类型type: %T, 变量的值value: %v\n", allData, allData)
 
 	// 获取配置项
@@ -355,8 +366,8 @@ func (c *UserController) Post() {
 		}
 		ticket := allData["ticket"].(string)
 		code := allData["code"].(string)
-		ua := ctx.GetHeader("User-Agent")                          // 拿到UA信息User-Agent
-		secret := otherCfg["SERV_KEY_SECRET"].(string) + code + ua // 验证码的特殊密钥
+		ua := ctx.GetHeader("User-Agent")                                     // 拿到UA信息User-Agent
+		secret := username + otherCfg["SERV_KEY_SECRET"].(string) + code + ua // 验证码的特殊密钥
 
 		println(ticket, code, secret)
 
@@ -1333,8 +1344,8 @@ func (c *UserController) PatchCaptcha() {
 	println(now.UnixMilli(), milli, "用纯时间戳（毫秒）+5随机数  生成验证码code:", code)
 	// 1719305088793 171930508879316643 用纯时间戳（毫秒）+5随机数  生成验证码code: 316643
 
-	ua := ctx.GetHeader("User-Agent")                          // 拿到UA信息User-Agent
-	secret := otherCfg["SERV_KEY_SECRET"].(string) + code + ua // 验证码的特殊密钥
+	ua := ctx.GetHeader("User-Agent")                                 // 拿到UA信息User-Agent
+	secret := name + otherCfg["SERV_KEY_SECRET"].(string) + code + ua // 验证码的特殊密钥(添加用户名name防止假令牌篡改登录或注册)
 	// 生成 token 返回给客户
 	token, _ := utils.GenerateToken(0, exptime, secret)
 	// ctx.JSON(iris.Map{"data": token, "code": 0, "msg": typeName})
