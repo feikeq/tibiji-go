@@ -179,9 +179,9 @@ func (c *OauthController) Post() {
 		if *user.State == 2 {
 			if env != "" {
 				println("帐号还未激活")
-				ctx.JSON(iris.Map{"code": config.ErrNoPermission, "msg": config.ErrMsgs[config.ErrNoPermission], "_debug_carry": allData, "_debug_err": "帐号还未激活"})
+				ctx.JSON(iris.Map{"code": config.ErrNoActivate, "msg": config.ErrMsgs[config.ErrNoActivate], "_debug_carry": allData, "_debug_err": "帐号还未激活"})
 			} else {
-				ctx.JSON(iris.Map{"code": config.ErrNoPermission, "msg": config.ErrMsgs[config.ErrNoPermission]})
+				ctx.JSON(iris.Map{"code": config.ErrNoActivate, "msg": config.ErrMsgs[config.ErrNoActivate]})
 			}
 			return
 		} else if *user.State == 0 {
