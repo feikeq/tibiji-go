@@ -13,7 +13,7 @@ package controllers //要创建的包名
 import (
 	// import这里不是指文件名而是package-name(代码内的 package 包名)
 
-	// Go的标准库包含了大量的包（如：fmt 和 os）
+	// Go的标准库包含了大量的包（如： fmt 和 os）
 
 	"fmt"
 	"strings"
@@ -331,7 +331,7 @@ func (c *UserController) Post() {
 	// 获取配置项
 	otherCfg := ctx.Application().ConfigurationReadOnly().GetOther()
 	isCheck := otherCfg["SERV_OPEN_CHECK"].(bool) // 是否开启验证(登录注册是否验证)
-	fmt.Printf("isCheck变量类型type: %T, 变量的值value: %v\n", isCheck, isCheck)
+	fmt.Printf("是否开启验证(登录注册是否验证) 类型type: %T, 值value: %v\n", isCheck, isCheck)
 	if isCheck {
 
 		var errTxt = ""
@@ -376,7 +376,19 @@ func (c *UserController) Post() {
 		if err != nil {
 			println("VerifyTicket Error: ", err.Error())
 			ctx.StatusCode(iris.StatusUnauthorized)
-			ctx.JSON(iris.Map{"code": config.ErrVerificationCode, "msg": config.ErrMsgs[config.ErrVerificationCode]})
+
+			switch err.Error() {
+			case "0":
+				println("code无效")
+				ctx.JSON(iris.Map{"code": config.ErrVerificationCode, "msg": config.ErrMsgs[config.ErrVerificationCode]})
+			case "1":
+				println("code已过期")
+				ctx.JSON(iris.Map{"code": config.ErrExpireCode, "msg": config.ErrMsgs[config.ErrExpireCode]})
+			default:
+				println("code其他错误")
+				ctx.JSON(iris.Map{"code": config.ErrVerificationCode, "msg": config.ErrMsgs[config.ErrVerificationCode]})
+			}
+
 			return
 		}
 
@@ -836,6 +848,73 @@ func (c *UserController) PostLogin() {
 	pwd := allData["pwd"].(string)
 	name := allData["name"].(string)
 
+	// 获取配置项
+	otherCfg := ctx.Application().ConfigurationReadOnly().GetOther()
+	isCheck := otherCfg["SERV_OPEN_CHECK"].(bool) // 是否开启验证(登录注册是否验证)
+	fmt.Printf("是否开启验证(登录注册是否验证) 类型type: %T, 值value: %v\n", isCheck, isCheck)
+	if isCheck {
+
+		var errTxt = ""
+		// 判断是否存在字段 "ticket"
+		if _, ok := allData["ticket"]; !ok {
+			errTxt = "验证令牌ticket不能为空"
+		} else {
+			if allData["ticket"] == "" {
+				errTxt = "验证令牌ticket不能为空"
+			}
+		}
+
+		println("ticket", allData["ticket"])
+
+		// 判断是否存在字段 "code"
+		if _, ok := allData["code"]; !ok {
+			errTxt = "验证码code不能为空"
+		} else {
+			if allData["code"] == "" {
+				errTxt = "验证码code不能为空"
+			}
+		}
+		if errTxt != "" {
+			if env != "" {
+				println("errTxt Error: ", errTxt)
+				ctx.JSON(iris.Map{"code": config.ErrParamEmpty, "msg": config.ErrMsgs[config.ErrParamEmpty], "_debug_carry": allData, "_debug_err": errTxt})
+			} else {
+				ctx.JSON(iris.Map{"code": config.ErrParamEmpty, "msg": config.ErrMsgs[config.ErrParamEmpty]})
+
+			}
+			return
+		}
+		ticket := allData["ticket"].(string)
+		code := allData["code"].(string)
+		ua := ctx.GetHeader("User-Agent")                                 // 拿到UA信息User-Agent
+		secret := name + otherCfg["SERV_KEY_SECRET"].(string) + code + ua // 验证码的特殊密钥
+
+		println(ticket, code, secret)
+
+		// 进行 Basic Auth 身份认证
+		temp_uid, err := utils.VerifyToken(ticket, secret)
+		if err != nil {
+			println("VerifyTicket Error: ", err.Error())
+			ctx.StatusCode(iris.StatusUnauthorized)
+
+			switch err.Error() {
+			case "0":
+				println("code无效")
+				ctx.JSON(iris.Map{"code": config.ErrVerificationCode, "msg": config.ErrMsgs[config.ErrVerificationCode]})
+			case "1":
+				println("code已过期")
+				ctx.JSON(iris.Map{"code": config.ErrExpireCode, "msg": config.ErrMsgs[config.ErrExpireCode]})
+			default:
+				println("code其他错误")
+				ctx.JSON(iris.Map{"code": config.ErrVerificationCode, "msg": config.ErrMsgs[config.ErrVerificationCode]})
+			}
+
+			return
+		}
+
+		println("验证通过为0的虚拟ID", temp_uid) // 继续往下执行
+	}
+
 	// 查找用户 (使用username、email、cell、identity_card查找用户)
 	user, typeName, err := c.Models.Find(name)
 	if err != nil {
@@ -852,9 +931,9 @@ func (c *UserController) PostLogin() {
 	if *user.State == 2 {
 		if env != "" {
 			println("帐号还未激活")
-			ctx.JSON(iris.Map{"code": config.ErrNoPermission, "msg": config.ErrMsgs[config.ErrNoPermission], "_debug_carry": allData, "_debug_err": "帐号还未激活"})
+			ctx.JSON(iris.Map{"code": config.ErrNoActivate, "msg": config.ErrMsgs[config.ErrNoActivate], "_debug_carry": allData, "_debug_err": "帐号还未激活"})
 		} else {
-			ctx.JSON(iris.Map{"code": config.ErrNoPermission, "msg": config.ErrMsgs[config.ErrNoPermission]})
+			ctx.JSON(iris.Map{"code": config.ErrNoActivate, "msg": config.ErrMsgs[config.ErrNoActivate]})
 		}
 		return
 	} else if *user.State == 0 {
@@ -918,8 +997,6 @@ func (c *UserController) PostLogin() {
 	}
 	delete(result, "ciphers")
 
-	// 获取配置项
-	otherCfg := ctx.Application().ConfigurationReadOnly().GetOther()
 	ua := ctx.GetHeader("User-Agent") // 拿到UA信息User-Agent
 	exptime := otherCfg["SERV_EXPIRES_TIME"].(int64)
 	secret := otherCfg["SERV_KEY_SECRET"].(string) + ua
@@ -1348,6 +1425,7 @@ func (c *UserController) PatchCaptcha() {
 	secret := name + otherCfg["SERV_KEY_SECRET"].(string) + code + ua // 验证码的特殊密钥(添加用户名name防止假令牌篡改登录或注册)
 	// 生成 token 返回给客户
 	token, _ := utils.GenerateToken(0, exptime, secret)
+	println(token)
 	// ctx.JSON(iris.Map{"data": token, "code": 0, "msg": typeName})
 
 	if typeName == "email" {

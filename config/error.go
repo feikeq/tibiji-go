@@ -23,10 +23,12 @@ const (
 	ErrResExists        = 20002 // 资源已存在
 	ErrUserDisabled     = 20010 // 当前登录账户已被禁用，请联系管理员
 	ErrNoPermission     = 20011 // 没有权限进行对应操作，请联系管理员
+	ErrNoActivate       = 20013 // 尚未激活
 	ErrValidation       = 20100 // 用户名或密码错误
 	ErrHeader           = 20104 // 授权标头为空
 	ErrToken            = 20105 // Token错误或过期
-	ErrVerificationCode = 20108 // 证码验证失败
+	ErrVerificationCode = 20108 // 验证码错误
+	ErrExpireCode       = 20109 // 验证码已过期
 	ErrFormat           = 20107 // 格式不正确
 	ErrNotVip           = 20110 // 您不是VIP或已过期
 
@@ -45,10 +47,12 @@ var ErrMsgs = map[int]string{
 	ErrResExists:        "资源已存在",
 	ErrUserDisabled:     "当前登录账户已被禁用，请联系管理员",
 	ErrNoPermission:     "没有权限进行对应操作，请联系管理员",
+	ErrNoActivate:       "尚未激活",
 	ErrValidation:       "用户名或密码错误",
 	ErrHeader:           "授权标头为空",
 	ErrToken:            "Token错误或过期",
-	ErrVerificationCode: "证码验证失败",
+	ErrVerificationCode: "验证码错误",
+	ErrExpireCode:       "验证码已过期",
 	ErrFormat:           "格式不正确",
 	ErrNotVip:           "您不是VIP或已过期",
 }

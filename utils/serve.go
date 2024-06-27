@@ -110,22 +110,22 @@ func VerifyToken(tokenString string, secret string) (int64, error) {
 	uidStr := token[:tokeLen-42]                 // 用户ID转为10进制数字的字符串
 	check := CalculateMD5(uidStr + key + expStr) // 生成检查串
 
-	// println("expStr", expStr)
-	// println("valid", valid)
-	// println("check", check)
-	// println("uidStr", uidStr)
+	println("expStr", expStr)
+	println("valid", valid)
+	println("check", check)
+	println("uidStr", uidStr)
 	uid, _ := strconv.ParseInt(uidStr, 10, 64) // 字符转数字
 	exp, _ := strconv.ParseInt(expStr, 10, 64) // 字符转数字
 	// println("exp", exp)
 
 	// 校验 Token 是否有效
 	if valid != check {
-		return 0, fmt.Errorf("token 无效")
+		return 0, fmt.Errorf("0") //token 无效
 	}
 
 	// 检查过期时间是否超时（当前时间是否大于token有效时间）
 	if time.Now().Unix() > exp {
-		return 0, fmt.Errorf("token 已过期")
+		return 0, fmt.Errorf("1") //token 已过期
 	}
 
 	// println("uid", uid)
