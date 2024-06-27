@@ -14,23 +14,23 @@ package config
 const (
 	ErrUnknown          = 10000 // 未知错误
 	ErrBadRequest       = 10001 // 错误的请求
-	ErrUnauthorized     = 10002 // 未授权访问
-	ErrInternal         = 10003 // 内部服务器错误
-	ErrNotFound         = 10004 // 请求的资源不存在
-	ErrParamEmpty       = 10005 // 传入的参数为空或者不合法
+	ErrUnauthorized     = 10004 // 未授权访问
+	ErrInternal         = 10007 // 内部服务器错误
+	ErrNotFound         = 10010 // 请求的资源不存在
+	ErrParamEmpty       = 10020 // 传入的参数为空或者不合法
 	ErrDatabase         = 20000 // 数据库错误
-	ErrNoRecords        = 20001 // 没有找到指定类型的记录
-	ErrResExists        = 20002 // 资源已存在
-	ErrUserDisabled     = 20010 // 当前登录账户已被禁用，请联系管理员
-	ErrNoPermission     = 20011 // 没有权限进行对应操作，请联系管理员
-	ErrNoActivate       = 20013 // 尚未激活
+	ErrNoRecords        = 20010 // 没有找到指定类型的记录
+	ErrResExists        = 20020 // 资源已存在
+	ErrUserDisabled     = 20040 // 当前登录账户已被禁用，请联系管理员
+	ErrNoPermission     = 20050 // 没有权限进行对应操作，请联系管理员
+	ErrNoActivate       = 20060 // 尚未激活
 	ErrValidation       = 20100 // 用户名或密码错误
 	ErrHeader           = 20104 // 授权标头为空
-	ErrToken            = 20105 // Token错误或过期
-	ErrVerificationCode = 20108 // 验证码错误
-	ErrExpireCode       = 20109 // 验证码已过期
-	ErrFormat           = 20107 // 格式不正确
-	ErrNotVip           = 20110 // 您不是VIP或已过期
+	ErrToken            = 20200 // Token错误或过期
+	ErrVerificationCode = 20301 // 验证码错误
+	ErrExpireCode       = 20302 // 验证码已过期
+	ErrFormat           = 20400 // 格式不正确
+	ErrNotVip           = 20500 // 您不是VIP或已过期
 
 )
 
