@@ -79,7 +79,7 @@ func (c *NotepadController) Post() {
 	// println("此用户总纸张数：", total)
 
 	// 如果超出最大数量 -  默认5记事本，vip不限制数目记事本
-	if total > max {
+	if total >= max {
 		// 判断是否为VIP
 		_, v_err := c.UserModel.IsVip(tkUid)
 		if v_err != nil {
@@ -94,6 +94,9 @@ func (c *NotepadController) Post() {
 	// 添加用户ID
 	allData["uid"] = tkUid
 	// fmt.Printf("变量类型type: %T, 变量的值value: %v\n", allData, allData)
+
+	// 客户端IP地址
+	allData["ip"] = utils.GetRealIP(ctx)
 
 	// 调取创建用户模型 - 返回新插入数据的id
 	uid, err := c.Models.Create(allData)
