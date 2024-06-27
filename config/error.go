@@ -21,9 +21,9 @@ const (
 	ErrDatabase         = 20000 // 数据库错误
 	ErrNoRecords        = 20010 // 没有找到指定类型的记录
 	ErrResExists        = 20020 // 资源已存在
-	ErrUserDisabled     = 20040 // 当前登录帐号已被禁用，请联系管理员
-	ErrNoPermission     = 20050 // 没有权限进行对应操作，请联系管理员
-	ErrNoActivate       = 20060 // 此帐号尚未激活
+	ErrUserDisabled     = 20040 // 帐号已被禁用
+	ErrNoPermission     = 20050 // 帐号无权限操作
+	ErrNoActivate       = 20060 // 帐号尚未激活
 	ErrValidation       = 20100 // 用户名或密码错误
 	ErrHeader           = 20104 // 授权标头为空
 	ErrToken            = 20200 // Token错误或过期
@@ -45,8 +45,8 @@ var ErrMsgs = map[int]string{
 	ErrDatabase:         "数据库错误",
 	ErrNoRecords:        "没有找到指定类型的记录",
 	ErrResExists:        "资源已存在",
-	ErrUserDisabled:     "帐号已被禁用，请联系管理员",
-	ErrNoPermission:     "无权限操作",
+	ErrUserDisabled:     "帐号已被禁用",
+	ErrNoPermission:     "帐号无权限操作",
 	ErrNoActivate:       "帐号尚未激活",
 	ErrValidation:       "用户名或密码错误",
 	ErrHeader:           "授权标头为空",

@@ -146,8 +146,8 @@ func (c *NotepadController) PutBy(id int64) {
 	delete(allData, "intime") // 删除 创建时间
 	delete(allData, "share")  // 共享地址(区分大小写)
 
-	// 权限不够则删除
-	delete(allData, "state") // 管理员才能修改 状态
+	// // 权限不够则删除 -  用户自己可以锁定这个记事本不被分享
+	// delete(allData, "state") // 管理员才能修改 状态
 
 	// 调取模型 - 根据ID更新数据库中的信息
 	row, err := c.Models.Update(tkUid, id, allData)
