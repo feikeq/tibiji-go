@@ -198,7 +198,7 @@ func (m *NotepadModel) Find(url string) (NotepadInfo, error) {
 	// 拼接 GET 的 select 查询语句
 	fields := "`nid`,`uid`,`url`,`share`,`content`,`pwd`,`caret`,`scroll`,`ip`,`referer`,`state`,`intime`,`uptime` "
 	sql := fmt.Sprintf("SELECT %s FROM `%s` WHERE `url` = ? LIMIT 1", fields, m.TableName)
-	println("\r\n", sql) // 打印sql
+	// println("\r\n", sql) // 打印sql
 
 	var user NotepadInfo
 	err := m.DB.Get(&user, sql, url) // 查询单行数据 ， 也可以用 NamedQuery
@@ -211,19 +211,19 @@ func (m *NotepadModel) Find(url string) (NotepadInfo, error) {
 }
 
 // Read（读取）云纸张
-func (m *NotepadModel) Read(url string) (string, error) {
-
+func (m *NotepadModel) Read(url string) (NotepadInfo, error) {
 	// 拼接 GET 的 select 查询语句
-	sql := fmt.Sprintf("SELECT `content` FROM `%s` WHERE `share`=? AND `state` = 1 LIMIT 1", m.TableName)
+	fields := "`nid`,`uid`,`url`,`share`,`content`,`pwd`,`caret`,`scroll`,`ip`,`referer`,`state`,`intime`,`uptime` "
+	sql := fmt.Sprintf("SELECT %s FROM `%s` WHERE `share`=? AND `state` = 1 LIMIT 1", fields, m.TableName)
 	// println("\r\n", sql) // 打印sql
 
-	var txt string
-	err := m.DB.Get(&txt, sql, url) // 查询单行数据 ， 也可以用 NamedQuery
+	var user NotepadInfo
+	err := m.DB.Get(&user, sql, url) // 查询单行数据 ， 也可以用 NamedQuery
 	if err != nil {
 		println("Err: ", err.Error())
-		return txt, err
+		return user, err
 	}
-	return txt, nil
+	return user, nil
 }
 
 // 检查云纸张数量

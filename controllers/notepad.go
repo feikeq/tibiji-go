@@ -235,7 +235,7 @@ func (c *NotepadController) GetBy(url string) {
 		ctx.JSON(iris.Map{"code": config.ErrNoActivate, "msg": config.ErrMsgs[config.ErrNoActivate]})
 		return
 	} else if statu == 0 {
-		ctx.JSON(iris.Map{"code": config.ErrUserDisabled, "msg": config.ErrMsgs[config.ErrUserDisabled]})
+		ctx.JSON(iris.Map{"code": config.ErrNoPermission, "msg": config.ErrMsgs[config.ErrNoPermission]})
 		return
 	}
 
@@ -283,12 +283,22 @@ func (c *NotepadController) GetShareBy(uuid string) {
 		println("---------------------------------------------------------")
 	}
 
-	txt, err := c.Models.Read(uuid)
+	notepad, err := c.Models.Read(uuid)
 	if err != nil {
 		println("Models.Read Error: ", err.Error())
-		ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase]})
+		ctx.JSON(iris.Map{"code": config.ErrNotFound, "msg": config.ErrMsgs[config.ErrNotFound]})
 		return
 	}
 
-	ctx.JSON(iris.Map{"data": txt, "code": 0, "msg": ""})
+	// 检查纸张的用户状态
+	statu := c.UserModel.CheckStatus(notepad.UID)
+	if statu == 2 {
+		ctx.JSON(iris.Map{"code": config.ErrNoActivate, "msg": config.ErrMsgs[config.ErrNoActivate]})
+		return
+	} else if statu == 0 {
+		ctx.JSON(iris.Map{"code": config.ErrNoPermission, "msg": config.ErrMsgs[config.ErrNoPermission]})
+		return
+	}
+
+	ctx.JSON(iris.Map{"data": notepad.Content, "code": 0, "msg": ""})
 }
