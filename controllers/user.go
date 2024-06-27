@@ -848,11 +848,22 @@ func (c *UserController) PostLogin() {
 	pwd := allData["pwd"].(string)
 	name := allData["name"].(string)
 
+	// 判断类型
+	typeName := "username"
+	if utils.CheckEmail(name) {
+		typeName = "email"
+	} else if utils.CheckMobile(name) {
+		typeName = "cell"
+	} else if utils.CheckIdCard(name) {
+		typeName = "identity_card"
+	}
+
 	// 获取配置项
 	otherCfg := ctx.Application().ConfigurationReadOnly().GetOther()
 	isCheck := otherCfg["SERV_OPEN_CHECK"].(bool) // 是否开启验证(登录注册是否验证)
 	fmt.Printf("是否开启验证(登录注册是否验证) 类型type: %T, 值value: %v\n", isCheck, isCheck)
-	if isCheck {
+	// 当开启 SERV_OPEN_CHECK 是否开启验证 时 ，且登录方式是用邮箱/手机时 code 和 ticket 才为必填字段，当为 用户名/身份证 登录时可不用验证码就可以登录。
+	if isCheck && (typeName == "cell" || typeName == "email") {
 
 		var errTxt = ""
 		// 判断是否存在字段 "ticket"
@@ -1388,7 +1399,7 @@ func (c *UserController) PatchCaptcha() {
 		}
 		return
 	}
-	name := allData["name"].(string)
+	name := allData["name"].(string) // 用户名/邮箱/手机/身份证
 
 	// 判断类型
 	typeName := "username"
@@ -1429,7 +1440,7 @@ func (c *UserController) PatchCaptcha() {
 	// ctx.JSON(iris.Map{"data": token, "code": 0, "msg": typeName})
 
 	if typeName == "email" {
-		subject := fmt.Sprintf("[%s]密码找回服务", smtpName)
+		subject := fmt.Sprintf("[%s]验证码", smtpName)
 		body := fmt.Sprintf("尊敬的%s用户您好：<br/>", smtpName)
 		// 将float64浮点只保留一位小数
 		body += fmt.Sprintf("请务必在<b>%.1f</b>小时内通过验证，验证码将在%s后失效！<br/><br/>", hours, expStr)
@@ -1447,7 +1458,7 @@ func (c *UserController) PatchCaptcha() {
 		go utils.SendSMS(ctx, name, smsTemplate[0], []string{code})
 		ctx.JSON(iris.Map{"data": token, "code": 0, "msg": typeName})
 	} else {
-		ctx.JSON(iris.Map{"code": config.ErrParamEmpty, "msg": config.ErrMsgs[config.ErrParamEmpty]})
+		ctx.JSON(iris.Map{"data": token, "code": 0, "msg": typeName})
 	}
 
 }
