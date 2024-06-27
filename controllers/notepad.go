@@ -229,9 +229,25 @@ func (c *NotepadController) GetBy(url string) {
 		return
 	}
 
+	// 检查纸张的用户状态
+	statu := c.UserModel.CheckStatus(notepad.UID)
+	if statu == 2 {
+		ctx.JSON(iris.Map{"code": config.ErrNoActivate, "msg": config.ErrMsgs[config.ErrNoActivate]})
+		return
+	} else if statu == 0 {
+		ctx.JSON(iris.Map{"code": config.ErrUserDisabled, "msg": config.ErrMsgs[config.ErrUserDisabled]})
+		return
+	}
+
 	// 数据处理 - 转换时间格式
 	notepad.Intime = utils.RFC3339ToString(notepad.Intime, 2) //防止拿到秒级精确时间
 	notepad.Uptime = utils.RFC3339ToString(notepad.Uptime, 2) //防止拿到秒级精确时间
+
+	// 判断是否为VIP
+	_, v_err := c.UserModel.IsVip(tkUid)
+	if v_err != nil {
+		notepad.Share = ""
+	}
 
 	// 如果没有密码直接返回
 	if notepad.Pwd == "" {
