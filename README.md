@@ -157,10 +157,9 @@ UPDATE myapp.tbj_notepad  SET `uid` = `referer` WHERE referer !='' AND referer  
 
 如果您发现在 TiBiJi 存在安全漏洞，请发送电子邮件至 [service@tibiji.com](mailto:service@tibiji.com)。所有安全漏洞将会得到及时解决。
 
-v 注册开启邮件验证码
-添加api鉴权检查用户状态
-记事本分享功能付费
-记事本数据加密?
+
+用户被禁用后所有操作该被禁止
+管理员才能更新纸的一些特别字段
 
 ## 📝 开源协议
 
