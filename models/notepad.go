@@ -235,7 +235,6 @@ func (m *NotepadModel) Check(uid int64) int64 {
 	err := m.DB.Get(&total, sql, uid) // 查询单行数据 ， 也可以用 NamedQuery
 	if err != nil {
 		println("Err: ", err.Error())
-		return total
 	}
 	return total
 }

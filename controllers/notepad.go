@@ -69,6 +69,16 @@ func (c *NotepadController) Post() {
 		println("---------------------------------------------------------")
 	}
 
+	// 检查当前用户状态
+	statu := c.UserModel.CheckStatus(tkUid)
+	if statu == 2 {
+		ctx.JSON(iris.Map{"code": config.ErrNoActivate, "msg": config.ErrMsgs[config.ErrNoActivate]})
+		return
+	} else if statu == 0 {
+		ctx.JSON(iris.Map{"code": config.ErrUserDisabled, "msg": config.ErrMsgs[config.ErrUserDisabled]})
+		return
+	}
+
 	// 获取配置 - 每个人最大云纸张(记事本)数量
 	otherCfg := ctx.Application().ConfigurationReadOnly().GetOther()
 	max := otherCfg["SERV_NOTEPAD_MAX"].(int64)

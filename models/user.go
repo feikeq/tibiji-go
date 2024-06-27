@@ -406,6 +406,20 @@ func (m *UserModel) Check(fieldName string, fieldValue string) bool {
 	return true
 }
 
+// 检查用户状态
+func (m *UserModel) CheckStatus(uid int64) int {
+	// 拼接 GET 的 select 查询语句
+	sql := fmt.Sprintf("SELECT `state` FROM `%s` WHERE `uid` =? ", m.TableName)
+	println("\r\n", sql) // 打印sql
+	var total int
+	err := m.DB.Get(&total, sql, uid) // 查询单行数据 ， 也可以用 NamedQuery
+	if err != nil {
+		println("Err: ", err.Error())
+	}
+	println("数据查询成功：", total)
+	return total
+}
+
 // 获取用户列表
 func (m *UserModel) List(filters map[string]interface{}, pageNumber, pageSize int64, pageOrder, pageField string) ([]UserInfo, int64, error) {
 	// 按结构体映射提交字段
