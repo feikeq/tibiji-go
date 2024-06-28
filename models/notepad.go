@@ -230,7 +230,7 @@ func (m *NotepadModel) Read(url string) (NotepadInfo, error) {
 func (m *NotepadModel) Check(url string) int {
 	// 拼接 GET 的 select 查询语句
 	sql := fmt.Sprintf("SELECT COUNT(*) FROM `%s` WHERE `url` =? ", m.TableName)
-	println("\r\n", sql, url) // 打印sql
+	// println("\r\n", sql, url) // 打印sql
 	var total int
 	err := m.DB.Get(&total, sql, url) // 查询单行数据 ， 也可以用 NamedQuery
 	if err != nil {
