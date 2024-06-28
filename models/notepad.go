@@ -198,7 +198,7 @@ func (m *NotepadModel) Find(url string) (NotepadInfo, error) {
 	// 拼接 GET 的 select 查询语句
 	fields := "`nid`,`uid`,`url`,`share`,`content`,`pwd`,`caret`,`scroll`,`ip`,`referer`,`state`,`intime`,`uptime` "
 	sql := fmt.Sprintf("SELECT %s FROM `%s` WHERE `url` = ? LIMIT 1", fields, m.TableName)
-	// println("\r\n", sql) // 打印sql
+	println("\r\n", sql, url) // 打印sql
 
 	var user NotepadInfo
 	err := m.DB.Get(&user, sql, url) // 查询单行数据 ， 也可以用 NamedQuery

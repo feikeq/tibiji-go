@@ -695,7 +695,7 @@ func (c *UserController) Put(ctx iris.Context) interface{} {
 	return json
 }
 
-// 更新用户 Patch:/user/{uid}
+// 更新用户 PATCH:/user/{uid}
 func (c *UserController) PatchBy(id int64) {
 	ctx := c.CTX
 	env := ctx.Values().GetString("ENV")

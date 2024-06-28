@@ -324,3 +324,59 @@ func (c *NotepadController) GetShareBy(uuid string) {
 
 	ctx.JSON(iris.Map{"data": notepad.Content, "code": 0, "msg": ""})
 }
+
+// 领取绑定 PATCH:/notepad/{url}
+func (c *NotepadController) PatchBy(url string) {
+	ctx := c.CTX
+	env := ctx.Values().GetString("ENV")
+	tkUid, _ := ctx.Values().GetInt64("UID")
+	if env != "" {
+		// 打印模块名
+		println("\r\n\r\n", env, tkUid)
+		println("---------------------------------------------------------")
+		println(ctx.GetCurrentRoute().MainHandlerName() + " [" + ctx.GetCurrentRoute().Path() + "] " + ctx.Method())
+		println("---------------------------------------------------------")
+	}
+	// 拿所有提交数据
+	allData := utils.AllDataToMap(ctx)
+	// fmt.Printf("allData %T -> %v", allData, allData)
+
+	var pwd string
+
+	// 判断是否存在字段 "pwd"
+	if _, ok := allData["pwd"]; ok {
+		pwd = allData["pwd"].(string)
+	}
+
+	notepad, err := c.Models.Find(url)
+	if err != nil {
+		if env != "" {
+			println("Models.Find Error: ", err.Error())
+			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase], "_debug_carry": url, "_debug_err": err.Error()})
+		} else {
+			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase]})
+		}
+		return
+	}
+
+	// 如果这页纸已有主人
+	if notepad.UID > 0 {
+		if env != "" {
+			println("Models.Find Error: ", err.Error())
+			ctx.JSON(iris.Map{"code": config.ErrNoPermission, "msg": config.ErrMsgs[config.ErrNoPermission], "_debug_carry": notepad, "_debug_err": "这页纸已有主人"})
+		} else {
+			ctx.JSON(iris.Map{"code": config.ErrNoPermission, "msg": config.ErrMsgs[config.ErrNoPermission]})
+		}
+		return
+	}
+
+	// 如果有密码
+	if notepad.Pwd != "" {
+		if pwd != notepad.Pwd {
+			ctx.JSON(iris.Map{"code": config.ErrNoPermission, "msg": config.ErrMsgs[config.ErrNoPermission], "data": notepad})
+			return
+		}
+	}
+
+	ctx.JSON(iris.Map{"code": "ok", "msg": "ok"})
+}
