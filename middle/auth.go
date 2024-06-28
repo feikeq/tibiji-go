@@ -47,6 +47,7 @@ func MiddlewareAuthToken(ctx iris.Context) {
 		"controllers.UserController.GetPassword",    // 找回密码
 		"controllers.UserController.PostPassword",   // 找回密码后设置新密码
 		"controllers.UserController.PatchCaptcha",   // 获取验证码
+		"controllers.UserController.GetTest",        // 限流测试
 		"controllers.OauthController.Post",          // 接入用户
 		"controllers.OauthController.AllWxBy",       // 微信接入
 		"controllers.OauthController.AllWxJsticket", // 微信JS-SDK

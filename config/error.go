@@ -18,6 +18,7 @@ const (
 	ErrInternal         = 10007 // 内部服务器错误
 	ErrNotFound         = 10010 // 请求的资源不存在
 	ErrParamEmpty       = 10020 // 传入的参数为空或者不合法
+	ErrFrequent         = 10030 // 请求过于频繁请稍后再试
 	ErrDatabase         = 20000 // 数据库错误
 	ErrNoRecords        = 20010 // 没有找到指定类型的记录
 	ErrResExists        = 20020 // 资源已存在
@@ -42,6 +43,7 @@ var ErrMsgs = map[int]string{
 	ErrInternal:         "内部服务器错误",
 	ErrNotFound:         "请求的资源不存在",
 	ErrParamEmpty:       "传入的参数为空或者不合法",
+	ErrFrequent:         "请求过于频繁请稍后再试",
 	ErrDatabase:         "数据库错误",
 	ErrNoRecords:        "没有找到指定类型的记录",
 	ErrResExists:        "资源已存在",

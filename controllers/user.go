@@ -17,6 +17,7 @@ import (
 
 	"fmt"
 	"strings"
+	"sync"
 	"time"
 
 	// 本项目自己的包
@@ -88,6 +89,31 @@ type Phone interface {
 }
 这里定义了一个电话接口，接口要求必须实现 call 方法
 */
+
+// IPRequestInfo 用于存储每个 IP 地址的请求信息
+type IPRequestInfo struct {
+	Count       int       // 请求计数器（如果需要统计请求次数或者做其他相关处理）
+	LastRequest time.Time // 上次请求时间
+}
+
+/*
+ipRequestMap 结构：
+
+	{
+	    "192.168.172.166": {
+	        "Count": 2,//正常访问次数
+	        "LastRequest": "2024-06-28T09:46:36.114986+08:00"//正常访问的最后一次时间
+	    },
+	    "192.168.172.88": {
+	        "Count": 2,
+	        "LastRequest": "2024-06-28T09:46:43.306207+08:00"
+	    }
+	}
+*/
+var (
+	ipRequestMap = make(map[string]*IPRequestInfo) // 存储 IP 地址的请求信息
+	mu           sync.Mutex                        // 互斥锁，保护 ipRequestMap 的并发访问
+)
 
 // 定义一个结构体
 /*
@@ -1376,6 +1402,56 @@ func (c *UserController) PatchCaptcha() {
 		println("---------------------------------------------------------")
 	}
 
+	{
+		// 接口访问频率限制： 利用 Go 标准库中的 sync.Mutex 和 time 包来实现基于 IP 地址的请求限流
+
+		// 定义限流时间(秒)时间间隔是否大于limiting秒
+		limiting := 30 * time.Second
+		// 定义超过时间(分钟)未请求视为过期
+		clearting := 5 * time.Minute
+
+		// 获取客户端 IP 地址
+		ip := ctx.RemoteAddr()
+
+		mu.Lock()
+		defer mu.Unlock()
+
+		// 获取当前 IP 地址的请求信息，如果不存在则初始化
+		info, exists := ipRequestMap[ip]
+		if !exists {
+			info = &IPRequestInfo{}
+			ipRequestMap[ip] = info
+		}
+
+		// 检查上次请求时间和当前时间间隔是否大于limiting秒
+		// time.Since是从某个时间开始，期间返回自某个时间以来经过的时间。
+		if time.Since(info.LastRequest) < limiting {
+			ctx.StatusCode(iris.StatusTooManyRequests)
+			// ctx.WriteString("请求过于频繁，请稍后再试")
+			if env != "" {
+				println("ipRequestMap", ipRequestMap)
+				ctx.JSON(iris.Map{"code": config.ErrFrequent, "msg": config.ErrMsgs[config.ErrFrequent], "_debug_carry": ipRequestMap})
+			} else {
+				ctx.JSON(iris.Map{"code": config.ErrFrequent, "msg": config.ErrMsgs[config.ErrFrequent]})
+			}
+			return
+		}
+
+		// 更新计数器和上次请求时间
+		info.Count++
+		info.LastRequest = time.Now()
+
+		// 清理 ipRequestMap 中过期的记录
+		now := time.Now()
+		for ip, info := range ipRequestMap {
+			if now.Sub(info.LastRequest) > clearting {
+				// 假设超过时间未请求，则视为过期
+				delete(ipRequestMap, ip)
+			}
+		}
+
+	}
+
 	// 拿所有提交数据
 	allData := utils.AllDataToMap(ctx)
 	// fmt.Printf("allData: %+v\n", allData) // 打印allData
@@ -1459,6 +1535,71 @@ func (c *UserController) PatchCaptcha() {
 		ctx.JSON(iris.Map{"data": token, "code": 0, "msg": typeName})
 	} else {
 		ctx.JSON(iris.Map{"data": token, "code": 0, "msg": typeName})
+	}
+
+}
+
+// 测试功能 get:/user/test
+func (c *UserController) GetTest() {
+	ctx := c.CTX
+	env := ctx.Values().GetString("ENV")
+	tkUid, _ := ctx.Values().GetInt64("UID")
+	if env != "" {
+		// 打印模块名
+		println("\r\n\r\n", env, tkUid)
+		println("---------------------------------------------------------")
+		println(ctx.GetCurrentRoute().MainHandlerName() + " [" + ctx.GetCurrentRoute().Path() + "] " + ctx.Method())
+		println("---------------------------------------------------------")
+	}
+
+	{
+		// 接口访问频率限制： 利用 Go 标准库中的 sync.Mutex 和 time 包来实现基于 IP 地址的请求限流
+
+		// 定义限流时间(秒)时间间隔是否大于limiting秒
+		limiting := 30 * time.Second
+		// 定义超过时间(分钟)未请求视为过期
+		clearting := 5 * time.Minute
+
+		// 获取客户端 IP 地址
+		ip := ctx.RemoteAddr()
+
+		mu.Lock()
+		defer mu.Unlock()
+
+		// 获取当前 IP 地址的请求信息，如果不存在则初始化
+		info, exists := ipRequestMap[ip]
+		if !exists {
+			info = &IPRequestInfo{}
+			ipRequestMap[ip] = info
+		}
+
+		// 检查上次请求时间和当前时间间隔是否大于limiting秒
+		// time.Since是从某个时间开始，期间返回自某个时间以来经过的时间。
+		if time.Since(info.LastRequest) < limiting {
+			ctx.StatusCode(iris.StatusTooManyRequests)
+			// ctx.WriteString("请求过于频繁，请稍后再试")
+			if env != "" {
+				println("ipRequestMap", ipRequestMap)
+				ctx.JSON(iris.Map{"code": config.ErrFrequent, "msg": config.ErrMsgs[config.ErrFrequent], "_debug_carry": ipRequestMap})
+			} else {
+				ctx.JSON(iris.Map{"code": config.ErrFrequent, "msg": config.ErrMsgs[config.ErrFrequent]})
+			}
+			return
+		}
+
+		// 更新计数器和上次请求时间
+		info.Count++
+		info.LastRequest = time.Now()
+
+		// 清理 ipRequestMap 中过期的记录
+		now := time.Now()
+		for ip, info := range ipRequestMap {
+			if now.Sub(info.LastRequest) > clearting {
+				// 假设超过时间未请求，则视为过期
+				delete(ipRequestMap, ip)
+			}
+		}
+
 	}
 
 }
