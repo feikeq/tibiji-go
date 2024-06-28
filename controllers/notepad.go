@@ -85,11 +85,11 @@ func (c *NotepadController) Post() {
 	// println("系统配置总纸张数：", max)
 
 	// 获取总纸张数量
-	total := c.Models.Check(tkUid)
-	// println("此用户总纸张数：", total)
+	num := c.Models.CheckNum(tkUid)
+	// println("此用户总纸张数：", num)
 
 	// 如果超出最大数量 -  默认5记事本，vip不限制数目记事本
-	if total >= max {
+	if num >= max {
 		// 判断是否为VIP
 		_, v_err := c.UserModel.IsVip(tkUid)
 		if v_err != nil {
@@ -107,6 +107,14 @@ func (c *NotepadController) Post() {
 
 	// 客户端IP地址
 	allData["ip"] = utils.GetRealIP(ctx)
+
+	// 获取总纸张数量
+	total := c.Models.Check(allData["url"].(string))
+
+	if total > 0 {
+		ctx.JSON(iris.Map{"code": config.ErrResExists, "msg": config.ErrMsgs[config.ErrResExists]})
+		return
+	}
 
 	// 调取创建用户模型 - 返回新插入数据的id
 	uid, err := c.Models.Create(allData)
@@ -229,6 +237,13 @@ func (c *NotepadController) GetBy(url string) {
 		return
 	}
 
+	// 如果这页纸没有主人请去认领
+	if notepad.UID == 0 {
+		// 闲置空资源待认领
+		ctx.JSON(iris.Map{"code": config.ErrEmptyIdle, "msg": config.ErrMsgs[config.ErrEmptyIdle]})
+		return
+	}
+
 	// 检查纸张的用户状态
 	statu := c.UserModel.CheckStatus(notepad.UID)
 	if statu == 2 {
@@ -287,6 +302,13 @@ func (c *NotepadController) GetShareBy(uuid string) {
 	if err != nil {
 		println("Models.Read Error: ", err.Error())
 		ctx.JSON(iris.Map{"code": config.ErrNotFound, "msg": config.ErrMsgs[config.ErrNotFound]})
+		return
+	}
+
+	// 如果这页纸没有主人请去认领
+	if notepad.UID == 0 {
+		// 闲置空资源待认领
+		ctx.JSON(iris.Map{"code": config.ErrEmptyIdle, "msg": config.ErrMsgs[config.ErrEmptyIdle]})
 		return
 	}
 

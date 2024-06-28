@@ -22,6 +22,7 @@ const (
 	ErrDatabase         = 20000 // 数据库错误
 	ErrNoRecords        = 20010 // 没有找到指定类型的记录
 	ErrResExists        = 20020 // 资源已存在
+	ErrEmptyIdle        = 20022 // 闲置空资源待认领
 	ErrUserDisabled     = 20040 // 帐号已被禁用
 	ErrNoPermission     = 20050 // 帐号无权限操作
 	ErrNoActivate       = 20060 // 帐号尚未激活
@@ -47,6 +48,7 @@ var ErrMsgs = map[int]string{
 	ErrDatabase:         "数据库错误",
 	ErrNoRecords:        "没有找到指定类型的记录",
 	ErrResExists:        "资源已存在",
+	ErrEmptyIdle:        "闲置空资源待认领",
 	ErrUserDisabled:     "帐号已被禁用",
 	ErrNoPermission:     "帐号无权限操作",
 	ErrNoActivate:       "帐号尚未激活",

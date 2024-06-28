@@ -416,7 +416,7 @@ func (m *UserModel) CheckStatus(uid int64) int {
 	if err != nil {
 		println("Err: ", err.Error())
 	}
-	println("数据查询成功：", total)
+	// println("检查用户状态查询成功：", total)
 	return total
 }
 

@@ -226,8 +226,21 @@ func (m *NotepadModel) Read(url string) (NotepadInfo, error) {
 	return user, nil
 }
 
+// 检查云纸张是否存在
+func (m *NotepadModel) Check(url string) int {
+	// 拼接 GET 的 select 查询语句
+	sql := fmt.Sprintf("SELECT COUNT(*) FROM `%s` WHERE `url` =? ", m.TableName)
+	println("\r\n", sql, url) // 打印sql
+	var total int
+	err := m.DB.Get(&total, sql, url) // 查询单行数据 ， 也可以用 NamedQuery
+	if err != nil {
+		println("Err: ", err.Error())
+	}
+	return total
+}
+
 // 检查云纸张数量
-func (m *NotepadModel) Check(uid int64) int64 {
+func (m *NotepadModel) CheckNum(uid int64) int64 {
 	// 拼接 GET 的 select 查询语句
 	sql := fmt.Sprintf("SELECT COUNT(*) FROM `%s` WHERE `uid` =? ", m.TableName)
 	// println("\r\n", sql) // 打印sql
