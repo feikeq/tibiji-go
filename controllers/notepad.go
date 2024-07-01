@@ -132,8 +132,8 @@ func (c *NotepadController) Post() {
 	ctx.JSON(iris.Map{"data": uid, "code": 0, "msg": ""})
 }
 
-// 更新纸张  PUT:/Notepad/{cid}
-func (c *NotepadController) PutBy(id int64) {
+// 更新纸张  PUT:/Notepad/{nid}
+func (c *NotepadController) PutBy(nid int64) {
 	ctx := c.CTX
 	env := ctx.Values().GetString("ENV")
 	tkUid, _ := ctx.Values().GetInt64("UID")
@@ -149,16 +149,37 @@ func (c *NotepadController) PutBy(id int64) {
 	allData := utils.AllDataToMap(ctx)
 	// fmt.Printf("allData %T -> %v", allData, allData)
 
+	// 客户端IP地址
+	allData["ip"] = utils.GetRealIP(ctx)
+
 	// 删除不能修改的字段
-	delete(allData, "uid")    // 删除 用户ID
-	delete(allData, "intime") // 删除 创建时间
-	delete(allData, "share")  // 共享地址(区分大小写)
+	delete(allData, "uid")     // 删除 用户ID
+	delete(allData, "intime")  // 删除 创建时间
+	delete(allData, "share")   // 共享地址(区分大小写)
+	delete(allData, "referer") // 纸张来源
 
 	// // 权限不够则删除 -  用户自己可以锁定这个记事本不被分享
-	// delete(allData, "state") // 管理员才能修改 状态
+	// delete(allData, "state") //状态
+
+	notepad, err := c.Models.Detail(nid)
+	if err != nil {
+		if env != "" {
+			println("Models.Find Error: ", err.Error())
+			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase], "_debug_carry": notepad, "_debug_err": err.Error()})
+		} else {
+			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase]})
+		}
+		return
+	}
+
+	// 如果不是自己的纸直接返回
+	if tkUid != notepad.UID {
+		ctx.JSON(iris.Map{"code": config.ErrNoPermission, "msg": config.ErrMsgs[config.ErrNoPermission]})
+		return
+	}
 
 	// 调取模型 - 根据ID更新数据库中的信息
-	row, err := c.Models.Update(tkUid, id, allData)
+	row, err := c.Models.Update(nid, allData)
 	if err != nil {
 		if env != "" {
 			println("Models.Update Error: ", err.Error())
@@ -172,8 +193,8 @@ func (c *NotepadController) PutBy(id int64) {
 	ctx.JSON(iris.Map{"data": row, "code": 0, "msg": ""})
 }
 
-// 删除纸张 DELETE:/Notepad/{cid}
-func (c *NotepadController) DeleteBy(id int64) {
+// 删除纸张 DELETE:/Notepad/{nid}
+func (c *NotepadController) DeleteBy(nid int64) {
 	ctx := c.CTX
 	env := ctx.Values().GetString("ENV")
 	tkUid, _ := ctx.Values().GetInt64("UID")
@@ -189,11 +210,11 @@ func (c *NotepadController) DeleteBy(id int64) {
 	// allData := utils.AllDataToMap(ctx)
 
 	// 调取模型 - 根据ID删除数据库中的信息
-	row, err := c.Models.Delete(tkUid, id)
+	row, err := c.Models.Delete(tkUid, nid)
 	if err != nil {
 		if env != "" {
 			println("Models.Delete Error: ", err.Error())
-			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase], "_debug_carry": id, "_debug_err": err.Error()})
+			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase], "_debug_carry": nid, "_debug_err": err.Error()})
 		} else {
 			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase]})
 		}
@@ -373,10 +394,25 @@ func (c *NotepadController) PatchBy(url string) {
 	// 如果有密码
 	if notepad.Pwd != "" {
 		if pwd != notepad.Pwd {
-			ctx.JSON(iris.Map{"code": config.ErrNoPermission, "msg": config.ErrMsgs[config.ErrNoPermission], "data": notepad})
+			ctx.JSON(iris.Map{"code": config.ErrNoPermission, "msg": config.ErrMsgs[config.ErrNoPermission]})
 			return
 		}
 	}
 
-	ctx.JSON(iris.Map{"code": "ok", "msg": "ok"})
+	// 设置此页纸张主人为本人
+	allData["uid"] = tkUid
+
+	// 调取模型 - 根据ID更新数据库中的信息
+	row, err := c.Models.Update(notepad.Nid, allData)
+	if err != nil {
+		if env != "" {
+			println("Models.Update Error: ", err.Error())
+			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase], "_debug_carry": allData, "_debug_err": err.Error()})
+		} else {
+			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase]})
+		}
+		return
+	}
+
+	ctx.JSON(iris.Map{"data": row, "code": 0, "msg": ""})
 }

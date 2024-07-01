@@ -15,8 +15,11 @@ func MiddlewareAuthToken(ctx iris.Context) {
 		ctx.Next()
 		return
 	}
-	println("--------- MiddlewareAuthToken ---------")
+	env := ctx.Values().GetString("ENV")
 
+	if env != "" {
+		println("--------- MiddlewareAuthToken ---------")
+	}
 	// 拿到配置和头信息
 	otherCfg := ctx.Application().ConfigurationReadOnly().GetOther()
 	ua := ctx.GetHeader("User-Agent") // 拿到UA信息User-Agent
@@ -74,12 +77,16 @@ func MiddlewareAuthToken(ctx iris.Context) {
 
 	// 进行用户校验的逻辑
 	if !needAuth {
-		println(currentTag, "放行")
+		if env != "" {
+			println(currentTag, "直接放行")
+		}
 		// 如果是白名单列表的接口，则不需要进行鉴权
 		ctx.Next()
 		return
 	} else {
-		println(currentTag, "正在进行权鉴...")
+		if env != "" {
+			println(currentTag, "正在进行权鉴...")
+		}
 	}
 
 	// println(secret, "校验标识：", currentTag)
@@ -108,6 +115,10 @@ func MiddlewareAuthToken(ctx iris.Context) {
 		ctx.StatusCode(iris.StatusUnauthorized)
 		ctx.JSON(iris.Map{"code": config.ErrToken, "msg": config.ErrMsgs[config.ErrToken]})
 		return
+	}
+
+	if env != "" {
+		println("toke认证通过！")
 	}
 
 	// 认证通过，继续处理请求

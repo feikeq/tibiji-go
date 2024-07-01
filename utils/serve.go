@@ -110,10 +110,10 @@ func VerifyToken(tokenString string, secret string) (int64, error) {
 	uidStr := token[:tokeLen-42]                 // 用户ID转为10进制数字的字符串
 	check := CalculateMD5(uidStr + key + expStr) // 生成检查串
 
-	println("expStr", expStr)
-	println("valid", valid)
-	println("check", check)
-	println("uidStr", uidStr)
+	// println("expStr", expStr)
+	// println("valid", valid)
+	// println("check", check)
+	// println("uidStr", uidStr)
 	uid, _ := strconv.ParseInt(uidStr, 10, 64) // 字符转数字
 	exp, _ := strconv.ParseInt(expStr, 10, 64) // 字符转数字
 	// println("exp", exp)

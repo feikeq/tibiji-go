@@ -92,7 +92,7 @@ func (m *NotepadModel) Create(data map[string]interface{}) (int64, error) {
 
 }
 
-func (m *NotepadModel) Update(uid int64, id int64, data map[string]interface{}) (int64, error) {
+func (m *NotepadModel) Update(nid int64, data map[string]interface{}) (int64, error) {
 	// 按结构体映射提交字段
 	data = utils.StructAssigMap(NotepadInfo{}, data)
 
@@ -118,9 +118,9 @@ func (m *NotepadModel) Update(uid int64, id int64, data map[string]interface{}) 
 	}
 
 	// 构建数据库的SQL语句
-	sql := fmt.Sprintf("UPDATE `%s` SET %s WHERE `nid`=%d AND `uid`=%d", m.TableName, strings.Join(fields, ","), id, uid)
-	println("\r\n", sql)                            // 打印sql
-	fmt.Printf("Type: %T , Data: %v\n", args, args) // 打印 args 映射的内容
+	sql := fmt.Sprintf("UPDATE `%s` SET %s WHERE `nid`=%d ", m.TableName, strings.Join(fields, ","), nid)
+	// println("\r\n", sql) // 打印sql
+	// fmt.Printf("Type: %T , Data: %v\n", args, args) // 打印 args 映射的内容
 
 	// 执行数据库的操作
 	database, err := m.DB.NamedExec(sql, args)
@@ -142,10 +142,10 @@ func (m *NotepadModel) Update(uid int64, id int64, data map[string]interface{}) 
 }
 
 // 物理删除
-func (m *NotepadModel) Delete(uid int64, id int64) (int64, error) {
+func (m *NotepadModel) Delete(uid int64, nid int64) (int64, error) {
 	// 物理删除  delete 删除
 	sql := fmt.Sprintf("DELETE FROM `%s` WHERE `nid` = ? AND `uid`=?", m.TableName)
-	resDelete, errDelete := m.DB.Exec(sql, id, uid)
+	resDelete, errDelete := m.DB.Exec(sql, nid, uid)
 	if errDelete != nil {
 		println("数据库delete删除失败，", errDelete.Error())
 		return 0, errDelete
@@ -159,7 +159,7 @@ func (m *NotepadModel) Delete(uid int64, id int64) (int64, error) {
 }
 
 // 所有纸张
-func (m *NotepadModel) List(id int64) ([]NotepadInfo, error) {
+func (m *NotepadModel) List(uid int64) ([]NotepadInfo, error) {
 
 	var infos []NotepadInfo
 
@@ -169,7 +169,7 @@ func (m *NotepadModel) List(id int64) ([]NotepadInfo, error) {
 	// println("\r\n", sql) // 打印sql
 
 	// err := m.DB.Select(&infos, sql, id) // 查询单行数据，也可以用 NamedQuery
-	rows, err := m.DB.Queryx(sql, id) // 支持?号的方式
+	rows, err := m.DB.Queryx(sql, uid) // 支持?号的方式
 	if err != nil {
 		println("Err: ", err.Error())
 		return infos, err
@@ -191,14 +191,14 @@ func (m *NotepadModel) List(id int64) ([]NotepadInfo, error) {
 	return infos, nil
 }
 
-// 查找云纸张
+// 查找云纸张 - url
 func (m *NotepadModel) Find(url string) (NotepadInfo, error) {
 	// SQL注入问题：我们任何时候都不应该自己拼接SQL语句！
 
 	// 拼接 GET 的 select 查询语句
 	fields := "`nid`,`uid`,`url`,`share`,`content`,`pwd`,`caret`,`scroll`,`ip`,`referer`,`state`,`intime`,`uptime` "
 	sql := fmt.Sprintf("SELECT %s FROM `%s` WHERE `url` = ? LIMIT 1", fields, m.TableName)
-	println("\r\n", sql, url) // 打印sql
+	// println("\r\n", sql, url) // 打印sql
 
 	var user NotepadInfo
 	err := m.DB.Get(&user, sql, url) // 查询单行数据 ， 也可以用 NamedQuery
@@ -210,7 +210,7 @@ func (m *NotepadModel) Find(url string) (NotepadInfo, error) {
 	return user, nil
 }
 
-// Read（读取）云纸张
+// Read（读取）云纸张 - uuid
 func (m *NotepadModel) Read(url string) (NotepadInfo, error) {
 	// 拼接 GET 的 select 查询语句
 	fields := "`nid`,`uid`,`url`,`share`,`content`,`pwd`,`caret`,`scroll`,`ip`,`referer`,`state`,`intime`,`uptime` "
@@ -223,6 +223,25 @@ func (m *NotepadModel) Read(url string) (NotepadInfo, error) {
 		println("Err: ", err.Error())
 		return user, err
 	}
+	return user, nil
+}
+
+// 查看云纸张 - nid
+func (m *NotepadModel) Detail(nid int64) (NotepadInfo, error) {
+	// SQL注入问题：我们任何时候都不应该自己拼接SQL语句！
+
+	// 拼接 GET 的 select 查询语句
+	fields := "`nid`,`uid`,`url`,`share`,`content`,`pwd`,`caret`,`scroll`,`ip`,`referer`,`state`,`intime`,`uptime` "
+	sql := fmt.Sprintf("SELECT %s FROM `%s` WHERE `nid` = ? LIMIT 1", fields, m.TableName)
+	// println("\r\n", sql, nid) // 打印sql
+
+	var user NotepadInfo
+	err := m.DB.Get(&user, sql, nid) // 查询单行数据 ， 也可以用 NamedQuery
+	if err != nil {
+		println("Err: ", err.Error())
+		return user, err
+	}
+
 	return user, nil
 }
 
@@ -239,7 +258,7 @@ func (m *NotepadModel) Check(url string) int {
 	return total
 }
 
-// 检查云纸张数量
+// 检查用户的云纸张数量
 func (m *NotepadModel) CheckNum(uid int64) int64 {
 	// 拼接 GET 的 select 查询语句
 	sql := fmt.Sprintf("SELECT COUNT(*) FROM `%s` WHERE `uid` =? ", m.TableName)
