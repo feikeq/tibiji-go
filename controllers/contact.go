@@ -14,16 +14,18 @@ import (
 )
 
 type ContactController struct {
-	DB     *sqlx.DB
-	Models *models.ContactModel
-	CTX    iris.Context
+	DB         *sqlx.DB
+	Models     *models.ContactModel
+	UserModels *models.UserModel // 用户模型
+	CTX        iris.Context
 }
 
 func NewContactController(db *sqlx.DB) *ContactController {
 	// 返回一个结构体指针
 	return &ContactController{
-		DB:     db,
-		Models: models.NewContactModel(db),
+		DB:         db,
+		Models:     models.NewContactModel(db),
+		UserModels: models.NewUserModel(db),
 	}
 }
 
@@ -362,5 +364,87 @@ func (c *ContactController) PostVcards() {
 	// 	errTXT = "有" + failures + "这些文件上传失败"
 	// }
 	ctx.JSON(iris.Map{"data": status, "code": 0, "msg": okList})
+
+}
+
+// 获取联系人  GET:/contact/{cid}
+func (c *ContactController) GetBy(cid int64) {
+	ctx := c.CTX
+	env := ctx.Values().GetString("ENV")
+	tkUid, _ := ctx.Values().GetInt64("UID")
+	if env != "" {
+		// 打印模块名
+		println("\r\n\r\n", env, tkUid)
+		println("---------------------------------------------------------")
+		println(ctx.GetCurrentRoute().MainHandlerName() + " [" + ctx.GetCurrentRoute().Path() + "] " + ctx.Method())
+		println("---------------------------------------------------------")
+	}
+
+	// 调取模型 - 根据ID更新数据库中的信息
+	row, err := c.Models.Read(cid)
+	if err != nil {
+		if env != "" {
+			println("Models.Update Error: ", err.Error())
+			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase], "_debug_carry": tkUid, "_debug_err": err.Error()})
+		} else {
+			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase]})
+		}
+		return
+	}
+
+	if row.UID != tkUid {
+		ctx.JSON(iris.Map{"code": config.ErrNoPermission, "msg": config.ErrMsgs[config.ErrNoPermission]})
+		return
+	}
+
+	ctx.JSON(iris.Map{"data": row, "code": 0, "msg": ""})
+}
+
+// 绑定联系人  PATCH:/contact/   - 绑定用户资料和附属资料到联系人
+func (c *ContactController) Patch() {
+	ctx := c.CTX
+	env := ctx.Values().GetString("ENV")
+	tkUid, _ := ctx.Values().GetInt64("UID")
+	if env != "" {
+		// 打印模块名
+		println("\r\n\r\n", env, tkUid)
+		println("---------------------------------------------------------")
+		println(ctx.GetCurrentRoute().MainHandlerName() + " [" + ctx.GetCurrentRoute().Path() + "] " + ctx.Method())
+		println("---------------------------------------------------------")
+	}
+
+	// 读取用户资料
+	user, err := c.UserModels.Read(tkUid)
+	if err != nil {
+		if env != "" {
+			println("Models.Read Error: ", err.Error())
+			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase], "_debug_carry": tkUid, "_debug_err": err.Error()})
+		} else {
+			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase]})
+		}
+		return
+	}
+
+	// 拿所有提交数据
+	allData := utils.AllDataToMap(ctx)
+
+	// 添加用户ID
+	allData["uid"] = tkUid
+	// fmt.Printf("变量类型type: %T, 变量的值value: %v\n", allData, allData)
+
+	// 调取创建用户模型 - 返回新插入数据的id
+	cid, err := c.Models.Create(allData)
+	if err != nil {
+		if env != "" {
+			println("Models.Create Error: ", err.Error())
+			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase], "_debug_carry": user, "_debug_err": err.Error()})
+		} else {
+			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase]})
+		}
+		return
+	}
+
+	// 返回成功响应
+	ctx.JSON(iris.Map{"data": cid, "code": 0, "msg": ""})
 
 }

@@ -173,6 +173,29 @@ func (m *ContactModel) Delete(uid, id int64) (int64, error) {
 
 }
 
+// Read（读取）攻取联系人详情 - 根据联系人ID从数据库中获取用户
+func (m *ContactModel) Read(id int64) (ContactInfo, error) {
+	// SQL注入问题：我们任何时候都不应该自己拼接SQL语句！
+
+	// 拼接 GET 的 select 查询语句
+	fields := "`cid`,`uid`,`fullname`,`pinyin`,`nickname`,`picture`,`phone`,`mail`,`im`,`http`,`company`,`position`,`address`,`gender`,`birthday`,`lunar`,`grouptag`,`grouptag`,`relation`,`family`,`note`,`state`,`intime`,`uptime`"
+	sql := fmt.Sprintf("SELECT %s FROM `%s` WHERE `cid`=? LIMIT 1", fields, m.TableName)
+	// println("\r\n",sql)                    // 打印sql
+
+	var info ContactInfo
+	err := m.DB.Get(&info, sql, id) // 查询单行数据 ， 也可以用 NamedQuery
+	if err != nil {
+		println("Err: ", err.Error())
+		return info, err
+	}
+	info.Birthday = utils.RFC3339ToString(info.Birthday, 2)
+	info.Intime = utils.RFC3339ToString(info.Intime, 2)
+	info.Uptime = utils.RFC3339ToString(info.Uptime, 2)
+
+	// println("数据查询成功：", info)
+	return info, nil
+}
+
 // 检查是否存在
 func (m *ContactModel) Check(fieldName string, fieldValue string) bool {
 	// existCell := c.Models.Check("cell", "13838389438")

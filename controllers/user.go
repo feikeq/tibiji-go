@@ -1467,7 +1467,7 @@ func (c *UserController) PostPassword() {
 	ctx.JSON(iris.Map{"data": data, "code": 0, "msg": "密码重置成功"})
 }
 
-// 获取验证码 patch:/user/captcha
+// 获取验证码 PATCH:/user/captcha
 func (c *UserController) PatchCaptcha() {
 	ctx := c.CTX
 	env := ctx.Values().GetString("ENV")
