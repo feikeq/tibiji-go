@@ -449,7 +449,85 @@ func (c *UserController) Post() {
 
 	// 返回成功响应
 	// ctx.StatusCode(iris.StatusOK)
-	ctx.JSON(iris.Map{"data": uid, "code": 0, "msg": ""})
+	// ctx.JSON(iris.Map{"data": uid, "code": 0, "msg": ""})
+
+	if isCheck {
+		// 返回登录信息
+		// 获取用户信息
+		user, err := c.Models.Read(uid)
+		if err != nil {
+			if env != "" {
+				println("Models.Read Error: ", err.Error())
+				ctx.JSON(iris.Map{"code": config.ErrNoRecords, "msg": config.ErrMsgs[config.ErrNoRecords], "_debug_carry": allData, "_debug_err": err.Error()})
+			} else {
+				ctx.JSON(iris.Map{"code": config.ErrNoRecords, "msg": config.ErrMsgs[config.ErrNoRecords]})
+			}
+			return
+		}
+
+		// 数据处理 - 转换时间格式
+		*user.Birthday = utils.RFC3339ToString(*user.Birthday, 0)
+		*user.Intime = utils.RFC3339ToString(*user.Intime, 2) //防止拿到秒级精确时间
+		*user.Uptime = utils.RFC3339ToString(*user.Uptime, 2) //防止拿到秒级精确时间
+		// 对手机号等敏感信息进行脱敏处理
+		*user.Cell = utils.MaskPhoneNumber(*user.Cell)
+		// 对邮箱进行脱敏处理
+		*user.Email = utils.MaskEmail(*user.Email)
+		// 对银行卡进行脱敏处理
+		*user.Bankcard = utils.MaskBankCardNumber(*user.Bankcard)
+		// 对身份证进行脱敏处理
+		*user.IdentityCard = utils.MaskIDCardNumber(*user.IdentityCard)
+		// 对真实姓名脱敏
+		*user.FName = utils.MaskRealName(*user.FName)
+
+		// // 对密码进行脱敏处理
+		// if user.Ciphers == "" {
+		// 	user.Ciphers = "0"
+		// } else {
+		// 	user.Ciphers = "1"
+		// }
+
+		result := utils.StructToMap(user, "json") // 结构体转MAP
+
+		// 对密码进行类型转换的脱敏处理
+		if result["ciphers"] != "" {
+			result["password"] = true
+		} else {
+			result["password"] = false
+		}
+		delete(result, "ciphers")
+
+		ua := ctx.GetHeader("User-Agent") // 拿到UA信息User-Agent
+		exptime := otherCfg["SERV_EXPIRES_TIME"].(int64)
+		secret := otherCfg["SERV_KEY_SECRET"].(string) + ua
+		// 添加 token
+		token, _ := utils.GenerateToken(*user.UID, exptime, secret)
+		result["token"] = token
+
+		// 操作写入日志表
+		logData := map[string]interface{}{
+			"uid":    *user.UID,
+			"action": "login",
+			"note":   "register",
+			"actip":  utils.GetRealIP(ctx),
+			"ua":     ua,
+		}
+		log := c.Models.SetLogs(logData)
+		if log != nil {
+			if env != "" {
+				println("Models.SetLogs Error: ", err.Error())
+				ctx.JSON(iris.Map{"data": result, "code": 0, "msg": "操作成功但日志记录失败", "_debug_carry": logData, "_debug_err": err.Error()})
+				return
+			}
+		}
+
+		ctx.JSON(iris.Map{"data": result, "code": 0, "msg": ""})
+
+	} else {
+		// 返回成功响应
+		ctx.StatusCode(iris.StatusOK)
+		ctx.JSON(iris.Map{"data": uid, "code": 0, "msg": ""})
+	}
 }
 
 // 用户信息 GET:/user/{uid}

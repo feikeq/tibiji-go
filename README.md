@@ -157,7 +157,7 @@ UPDATE myapp.tbj_notepad  SET `uid` = `referer` WHERE referer !='' AND referer  
 
 如果您发现在 TiBiJi 存在安全漏洞，请发送电子邮件至 [service@tibiji.com](mailto:service@tibiji.com)。所有安全漏洞将会得到及时解决。
 
-首次登录用户附属资料无数据？
+绑定用户资料和附属资料到联系人
 
 ## 📝 开源协议
 
