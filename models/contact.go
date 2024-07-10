@@ -173,7 +173,7 @@ func (m *ContactModel) Delete(uid, id int64) (int64, error) {
 
 }
 
-// Read（读取）攻取联系人详情 - 根据联系人ID从数据库中获取用户
+// Read（读取）获取联系人详情 - 根据联系人ID从数据库中获取用户
 func (m *ContactModel) Read(id int64) (ContactInfo, error) {
 	// SQL注入问题：我们任何时候都不应该自己拼接SQL语句！
 
