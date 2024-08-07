@@ -141,6 +141,15 @@ func (m *UserModel) Create(data map[string]interface{}) (int64, error) {
 
 	// 设置初始值 初始化入库数据 (手动校验或添加其他表单项字段）
 
+	// 判断是否存在字段 "username"
+	if _, ok := data["username"]; ok {
+		if data["username"] != "" {
+			if m.Check("username", data["username"].(string)) {
+				return 0, fmt.Errorf("用户名username已存在")
+			}
+		}
+	}
+
 	// 判断是否存在字段 "cell"
 	if _, ok := data["cell"]; ok {
 		if data["cell"] != "" {
