@@ -1,4 +1,4 @@
-# 提笔记 - 肥客接口架构  Ver 3.1.0
+# 提笔记 - 肥客接口架构  Ver 3.2.0
 [![The Go Programming Language](https://img.shields.io/badge/Go-v1.20.5-green)](https://github.com/golang/go)
 [![Iris](https://img.shields.io/badge/Iris-v12.2.0-green)](https://github.com/kataras/iris)
 [![sqlx](https://img.shields.io/badge/sqlx-v1.3.5-green)](https://github.com/jmoiron/sqlx)
@@ -157,8 +157,6 @@ UPDATE myapp.tbj_notepad  SET `uid` = `referer` WHERE referer !='' AND referer  
 
 如果您发现在 TiBiJi 存在安全漏洞，请发送电子邮件至 [service@tibiji.com](mailto:service@tibiji.com)。所有安全漏洞将会得到及时解决。
 
-获取联系人  GET:/contact/{cid}
-绑定联系人  PATCH:/contact/ 
 
 ## 📝 开源协议
 
