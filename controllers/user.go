@@ -1546,7 +1546,7 @@ func (c *UserController) PatchCaptcha() {
 	}
 
 	{
-		// 接口访问频率限制： 利用 Go 标准库中的 sync.Mutex 和 time 包来实现基于 IP 地址的请求限流
+		// 限制访问频率 - 接口访问频率限制： 利用 Go 标准库中的 sync.Mutex 和 time 包来实现基于 IP 地址的请求限流
 
 		// 定义限流时间(秒)时间间隔是否大于limiting秒
 		limiting := 30 * time.Second

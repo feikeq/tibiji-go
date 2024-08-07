@@ -9,6 +9,7 @@ import (
 	"tibiji-go/config"
 	"tibiji-go/models"
 	"tibiji-go/utils"
+	"time"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/kataras/iris/v12"
@@ -31,7 +32,7 @@ func NewRemindController(db *sqlx.DB) *RemindController {
 	}
 }
 
-// 提醒列表 GET:/remind
+// 获取提醒 GET:/remind/
 func (c *RemindController) Get() {
 	ctx := c.CTX
 	env := ctx.Values().GetString("ENV")
@@ -42,6 +43,56 @@ func (c *RemindController) Get() {
 		println("---------------------------------------------------------")
 		println(ctx.GetCurrentRoute().MainHandlerName() + " [" + ctx.GetCurrentRoute().Path() + "] " + ctx.Method())
 		println("---------------------------------------------------------")
+	}
+
+	{
+		// 限制访问频率 - 接口访问频率限制： 利用 Go 标准库中的 sync.Mutex 和 time 包来实现基于 IP 地址的请求限流
+
+		// 定义限流时间(秒)时间间隔是否大于limiting秒
+		limiting := 30 * time.Second
+		// 定义超过时间(分钟)未请求视为过期
+		clearting := 5 * time.Minute
+
+		// 获取客户端 IP 地址
+		ip := ctx.RemoteAddr()
+
+		mu.Lock()
+		defer mu.Unlock()
+
+		// 获取当前 IP 地址的请求信息，如果不存在则初始化
+		info, exists := ipRequestMap[ip]
+		if !exists {
+			info = &IPRequestInfo{}
+			ipRequestMap[ip] = info
+		}
+
+		// 检查上次请求时间和当前时间间隔是否大于limiting秒
+		// time.Since是从某个时间开始，期间返回自某个时间以来经过的时间。
+		if time.Since(info.LastRequest) < limiting {
+			ctx.StatusCode(iris.StatusTooManyRequests)
+			// ctx.WriteString("请求过于频繁，请稍后再试")
+			if env != "" {
+				println("ipRequestMap", ipRequestMap)
+				ctx.JSON(iris.Map{"code": config.ErrFrequent, "msg": config.ErrMsgs[config.ErrFrequent], "_debug_carry": ipRequestMap})
+			} else {
+				ctx.JSON(iris.Map{"code": config.ErrFrequent, "msg": config.ErrMsgs[config.ErrFrequent]})
+			}
+			return
+		}
+
+		// 更新计数器和上次请求时间
+		info.Count++
+		info.LastRequest = time.Now()
+
+		// 清理 ipRequestMap 中过期的记录
+		now := time.Now()
+		for ip, info := range ipRequestMap {
+			if now.Sub(info.LastRequest) > clearting {
+				// 假设超过时间未请求，则视为过期
+				delete(ipRequestMap, ip)
+			}
+		}
+
 	}
 
 	// 拿所有提交数据
@@ -61,7 +112,7 @@ func (c *RemindController) Get() {
 	ctx.JSON(iris.Map{"data": items, "code": 0, "msg": ""})
 }
 
-// 提醒任务 GET:/remind/task
+// 提醒任务 GET:/remind/task/
 func (c *RemindController) GetTask() {
 	ctx := c.CTX
 	env := ctx.Values().GetString("ENV")
@@ -127,7 +178,7 @@ func (c *RemindController) GetTask() {
 	ctx.JSON(iris.Map{"data": len(items.Email) + len(items.Phone) + len(items.Notice) + len(items.Message), "code": 0, "msg": "已成功生成队列任务"})
 }
 
-// 提醒队列 GET:/remind/queue
+// 提醒队列 GET:/remind/queue/
 func (c *RemindController) GetQueue() {
 	ctx := c.CTX
 	env := ctx.Values().GetString("ENV")
