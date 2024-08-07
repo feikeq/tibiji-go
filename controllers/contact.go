@@ -392,13 +392,14 @@ func (c *ContactController) GetBy(cid int64) {
 		return
 	}
 
-	// 如果不是本人的联系
+	// 如果不是本人的联系人
 	if row.UID != tkUid {
-		// 如果不是管理员
-		if !c.UserModels.IsAdmin(tkUid) {
-			ctx.JSON(iris.Map{"code": config.ErrUnauthorized, "msg": config.ErrMsgs[config.ErrUnauthorized]})
-			return
-		}
+		// // 如果不是管理员
+		// if !c.UserModels.IsAdmin(tkUid) {
+
+		// }
+		ctx.JSON(iris.Map{"code": config.ErrUnauthorized, "msg": config.ErrMsgs[config.ErrUnauthorized]})
+		return
 	}
 
 	ctx.JSON(iris.Map{"data": row, "code": 0, "msg": ""})
