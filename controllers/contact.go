@@ -76,6 +76,7 @@ func (c *ContactController) Get() {
 		pageField = allData["pageField"].(string)
 	}
 
+	// 获取自己的联系人列表
 	list, total, err := c.Models.List(tkUid, allData, pageNumber, pageSize, pageOrder, pageField)
 	if err != nil {
 		if env != "" {
@@ -169,7 +170,9 @@ func (c *ContactController) PutBy(id int64) {
 	delete(allData, "intime") // 删除 创建时间
 
 	// 权限不够则删除
-	delete(allData, "state") // 管理员才能修改 状态
+	delete(allData, "state") //  删除状态（管理员也不能修改）
+
+	// 只能修改自己添加的联系人，因为更新条件会自带带当前用户ID
 
 	// 调取模型 - 根据ID更新数据库中的信息
 	row, err := c.Models.Update(tkUid, id, allData)
@@ -233,6 +236,7 @@ func (c *ContactController) GetGroups() {
 	// // 拿所有提交数据
 	// allData := utils.AllDataToMap(ctx)
 
+	// 获取自己的联系人分组
 	row, err := c.Models.Groups(tkUid)
 	if err != nil {
 		if env != "" {
@@ -398,6 +402,7 @@ func (c *ContactController) GetBy(cid int64) {
 		// if !c.UserModels.IsAdmin(tkUid) {
 
 		// }
+		// 获取联系人功能必须是自己创建的才可以，管理员也无没权获取他人联系人
 		ctx.JSON(iris.Map{"code": config.ErrUnauthorized, "msg": config.ErrMsgs[config.ErrUnauthorized]})
 		return
 	}
