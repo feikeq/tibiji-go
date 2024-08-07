@@ -105,7 +105,7 @@ CREATE TABLE IF NOT EXISTS `sys_material` (
   `balance` decimal(18,2) NOT NULL DEFAULT '0.00' COMMENT '余额（元）',
   `vip` char(1) NOT NULL DEFAULT '0' COMMENT '会员(0否 1是 2超级会员)',
   `exptime` datetime NOT NULL DEFAULT '0000-00-00 00:00:00' COMMENT '会员到期时间',
-  `manage` char(1) NOT NULL DEFAULT '0' COMMENT '管理权限(0普通用户 1管理员)',
+  `manage` char(1) NOT NULL DEFAULT '0' COMMENT '管理权限(0普通用户 1管理员 2超管)',
   `tag` varchar(128) NOT NULL DEFAULT '' COMMENT '权限标识',
   `remark` varchar(255) NOT NULL DEFAULT '' COMMENT '备注',
   `object` text COMMENT '预留字段(不检索,可存json数组)',

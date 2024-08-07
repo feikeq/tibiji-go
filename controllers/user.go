@@ -515,7 +515,7 @@ func (c *UserController) Post() {
 		log := c.Models.SetLogs(logData)
 		if log != nil {
 			if env != "" {
-				println("Models.SetLogs Error: ", err.Error())
+				println("Models.SetLogs Error: ", log.Error())
 				ctx.JSON(iris.Map{"data": result, "code": 0, "msg": "操作成功但日志记录失败", "_debug_carry": logData, "_debug_err": err.Error()})
 				return
 			}
@@ -712,7 +712,7 @@ func (c *UserController) DeleteBy(id int64) {
 	ctx.JSON(iris.Map{"data": row, "code": 0, "msg": ""})
 }
 
-// 附属资料 GET:/user/{uid}/material
+// 获取附属资料 GET:/user/{uid}/material
 func (c *UserController) GetByMaterial(id int64) {
 	ctx := c.CTX
 	env := ctx.Values().GetString("ENV")
@@ -757,20 +757,42 @@ func (c *UserController) GetByMaterial(id int64) {
 	ctx.JSON(iris.Map{"data": material, "code": 0, "msg": ""})
 }
 
-func (c *UserController) Put(ctx iris.Context) interface{} {
-	fmt.Println("------------ user [PUT]---------------")
-
-	json := ctx.FormValues() // ctx.FormValues() 等同于 ctx.Request().Form
-
-	if json != nil {
-		var s []string
-		s = append(s, "3")
-		json["hahahahah"] = s
+// 修改附属资料 PUT:/user/{uid}/material
+func (c *UserController) PutByMaterial(id int64) {
+	ctx := c.CTX
+	env := ctx.Values().GetString("ENV")
+	tkUid, _ := ctx.Values().GetInt64("UID")
+	if env != "" {
+		// 打印模块名
+		println("\r\n\r\n", env, tkUid)
+		println("---------------------------------------------------------")
+		println(ctx.GetCurrentRoute().MainHandlerName() + " [" + ctx.GetCurrentRoute().Path() + "] " + ctx.Method())
+		println("---------------------------------------------------------")
 	}
 
-	// username := post
-	// return "Create by user with username: " + username
-	return json
+	// 如果不是管理员
+	if !c.Models.IsAdmin(tkUid) {
+		ctx.JSON(iris.Map{"code": config.ErrUnauthorized, "msg": config.ErrMsgs[config.ErrUnauthorized]})
+		return
+	}
+
+	// 拿所有提交数据
+	allData := utils.AllDataToMap(ctx)
+	fmt.Printf("allData: %+v\n", allData) // 打印allData
+
+	// 调取模型 - 根据ID更新数据库中的信息
+	row, err := c.Models.UpdateMaterial(id, allData)
+	if err != nil {
+		if env != "" {
+			println("Models.UpdateMaterial Error: ", err.Error())
+			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase], "_debug_carry": allData, "_debug_err": err.Error()})
+		} else {
+			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase]})
+		}
+		return
+	}
+
+	ctx.JSON(iris.Map{"data": row, "code": 0, "msg": ""})
 }
 
 // 更新用户 PATCH:/user/{uid}
@@ -1625,6 +1647,23 @@ func (c *UserController) PatchCaptcha() {
 		ctx.JSON(iris.Map{"data": token, "code": 0, "msg": typeName})
 	}
 
+}
+
+// 测试功能 - 无操作
+func (c *UserController) Put(ctx iris.Context) interface{} {
+	fmt.Println("------------ user [PUT]---------------")
+
+	json := ctx.FormValues() // ctx.FormValues() 等同于 ctx.Request().Form
+
+	if json != nil {
+		var s []string
+		s = append(s, "3")
+		json["hahahahah"] = s
+	}
+
+	// username := post
+	// return "Create by user with username: " + username
+	return json
 }
 
 // 测试功能 get:/user/test

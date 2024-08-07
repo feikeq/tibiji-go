@@ -541,6 +541,53 @@ func (m *UserModel) ReadMaterial(uid int64) (UserMaterial, error) {
 	return material, nil
 }
 
+// Update（更新）根据用户ID更新用户附属资料表
+func (m *UserModel) UpdateMaterial(id int64, data map[string]interface{}) (int64, error) {
+	// 实现更新数据库中用户信息的逻辑
+
+	// 按结构体映射提交字段
+	data = utils.StructAssigMap(UserMaterial{}, data)
+
+	// 没有更新数据项直接返回
+	if len(data) == 0 {
+		return 0, nil
+	}
+
+	// 使用 make() 函数来创建切片，Go语言切片是对数组的抽象
+	fields := make([]string, 0)
+	// values := make([]string, 0)
+	args := make(map[string]interface{})
+
+	// 获取用户提交的所有表单项字段 遍历数据
+	for key, value := range data {
+		fields = append(fields, "`"+key+"`=:"+key)
+		// values = append(values, ":"+key)
+		args[key] = value
+	}
+
+	// 构建数据库的SQL语句
+	sql := fmt.Sprintf("UPDATE `%s` SET %s WHERE `uid`=%d", m.MaterialTableName, strings.Join(fields, ","), id)
+	// println("\r\n", sql)            // 打印sql
+	// fmt.Printf("Type: %T , Data: %v\n", args, args) // 打印 args 映射的内容
+
+	// 执行插入数据库的操作
+	database, err := m.DB.NamedExec(sql, args)
+	if err != nil {
+		// 处理数据库操作错误
+		// println("NamedExec failed: ", err.Error())
+		return 0, err
+	}
+
+	// 获取插入结果
+	row, err := database.RowsAffected() // 更新行数
+	if err != nil {
+		println("LastInsertId failed: ", err.Error())
+		return 0, err
+	}
+
+	return row, nil
+}
+
 // 添加用户附属资料表
 func (m *UserModel) CreateMaterial(data map[string]interface{}) error {
 	// 打印模块名
