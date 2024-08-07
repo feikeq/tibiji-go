@@ -842,7 +842,7 @@ func (m *UserModel) GenerateUserClan(uid int64) []string {
 	}
 */
 
-// 是否是管理员
+// 判断是否是管理员
 func (m *UserModel) IsAdmin(uid int64) bool {
 	// println("====IsAdmin===")
 	// 调取模型
@@ -851,10 +851,25 @@ func (m *UserModel) IsAdmin(uid int64) bool {
 		println("m.ReadMaterial Error: ", err.Error())
 		return false
 	}
-	if material.Manage == 1 {
+	if material.Manage > 0 {
 		return true
 	}
 	return false
+}
+
+// 获取管理员权限极别
+func (m *UserModel) AdminLive(uid int64) int {
+	// println("====AdminLive===")
+	// 调取模型
+	material, err := m.ReadMaterial(uid)
+	if err != nil {
+		println("m.ReadMaterial Error: ", err.Error())
+		return 0
+	}
+	if material.Manage > 1 {
+		return material.Manage
+	}
+	return 0
 }
 
 // 是否是VIP并返回级别

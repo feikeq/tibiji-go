@@ -319,7 +319,7 @@ func (c *UserController) Get() {
 	// 向数据模板传值 当然也可以绑定其他值
 	// ctx.ViewData("", mapData)
 	// ctx.StatusCode(iris.StatusOK)
-	ctx.JSON(iris.Map{"data": data, "code": total, "msg": ""})
+	ctx.JSON(iris.Map{"data": data, "code": 0, "msg": ""})
 }
 
 // 添加用户 POST:/user
@@ -1152,12 +1152,6 @@ func (c *UserController) GetLogs() {
 		println("---------------------------------------------------------")
 	}
 
-	// 如果不是管理员
-	if !c.Models.IsAdmin(tkUid) {
-		ctx.JSON(iris.Map{"code": config.ErrUnauthorized, "msg": config.ErrMsgs[config.ErrUnauthorized]})
-		return
-	}
-
 	// 拿所有提交数据
 	allData := utils.AllDataToMap(ctx)
 	// fmt.Printf("allData: %+v\n", allData) // 打印allData
@@ -1165,6 +1159,22 @@ func (c *UserController) GetLogs() {
 	// 获取每页条数配置
 	otherCfg := ctx.Application().ConfigurationReadOnly().GetOther()
 	pageSize := otherCfg["SERV_LIST_SIZE"].(int64)
+
+	var uid int64
+
+	// 判断是否存在字段 "uid"
+	if _, ok := allData["uid"]; ok {
+		uid = utils.ParseInt64(allData["uid"]) // 任意数据转int64数字
+	}
+
+	// 如果操作人不是自己
+	if tkUid != uid {
+		// 如果不是管理员
+		if !c.Models.IsAdmin(tkUid) {
+			ctx.JSON(iris.Map{"code": config.ErrUnauthorized, "msg": config.ErrMsgs[config.ErrUnauthorized]})
+			return
+		}
+	}
 
 	// 分页参数
 	var pageNumber int64 = 1
@@ -1212,7 +1222,7 @@ func (c *UserController) GetLogs() {
 		List       []models.UserLogs `json:"list" description:"列表数据"`
 	}
 	data := temp{total, pageNumber, pageSize, pageOrder, pageField, list}
-	ctx.JSON(iris.Map{"data": data, "code": total, "msg": ""})
+	ctx.JSON(iris.Map{"data": data, "code": 0, "msg": ""})
 }
 
 // 忘记密码 GET:/user/password
