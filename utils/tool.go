@@ -484,12 +484,12 @@ func PrintExtSql(sql string, args map[string]interface{}) {
 }
 
 // SerializeJSON 序列化结构体为JSON字符串
-func SerializeJSON(data interface{}) (string, error) {
+func SerializeJSON(data interface{}) string {
 	bytes, err := json.Marshal(data)
 	if err != nil {
-		return "", err
+		return ""
 	}
-	return string(bytes), nil
+	return string(bytes)
 }
 
 // 统一封装返回的JSON数据结构 - 返回约定的JSON数据结构

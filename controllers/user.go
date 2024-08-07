@@ -322,7 +322,7 @@ func (c *UserController) Get() {
 	ctx.JSON(iris.Map{"data": data, "code": 0, "msg": ""})
 }
 
-// 添加用户 POST:/user
+// 新增用户 POST:/user/
 func (c *UserController) Post() {
 	ctx := c.CTX
 	env := ctx.Values().GetString("ENV")
@@ -358,67 +358,80 @@ func (c *UserController) Post() {
 	otherCfg := ctx.Application().ConfigurationReadOnly().GetOther()
 	isCheck := otherCfg["SERV_OPEN_CHECK"].(bool) // 是否开启验证(登录注册是否验证)
 	fmt.Printf("是否开启验证(登录注册是否验证) 类型type: %T, 值value: %v\n", isCheck, isCheck)
+
+	isAdmin := c.Models.IsAdmin(tkUid) //检查是否为管理员
 	if isCheck {
 
-		var errTxt = ""
-		// 判断是否存在字段 "ticket"
-		if _, ok := allData["ticket"]; !ok {
-			errTxt = "验证令牌ticket不能为空"
-		} else {
-			if allData["ticket"] == "" {
+		// 如果不是管理员
+		if !isAdmin {
+			var errTxt = ""
+			// 判断是否存在字段 "ticket"
+			if _, ok := allData["ticket"]; !ok {
 				errTxt = "验证令牌ticket不能为空"
-			}
-		}
-
-		println("ticket", allData["ticket"])
-
-		// 判断是否存在字段 "code"
-		if _, ok := allData["code"]; !ok {
-			errTxt = "验证码code不能为空"
-		} else {
-			if allData["code"] == "" {
-				errTxt = "验证码code不能为空"
-			}
-		}
-		if errTxt != "" {
-			if env != "" {
-				println("errTxt Error: ", errTxt)
-				ctx.JSON(iris.Map{"code": config.ErrParamEmpty, "msg": config.ErrMsgs[config.ErrParamEmpty], "_debug_carry": allData, "_debug_err": errTxt})
 			} else {
-				ctx.JSON(iris.Map{"code": config.ErrParamEmpty, "msg": config.ErrMsgs[config.ErrParamEmpty]})
-
-			}
-			return
-		}
-		ticket := allData["ticket"].(string)
-		code := allData["code"].(string)
-		ua := ctx.GetHeader("User-Agent")                                     // 拿到UA信息User-Agent
-		secret := username + otherCfg["SERV_KEY_SECRET"].(string) + code + ua // 验证码的特殊密钥
-
-		println(ticket, code, secret)
-
-		// 进行 Basic Auth 身份认证
-		temp_uid, err := utils.VerifyToken(ticket, secret)
-		if err != nil {
-			println("VerifyTicket Error: ", err.Error())
-			ctx.StatusCode(iris.StatusUnauthorized)
-
-			switch err.Error() {
-			case "0":
-				println("code无效")
-				ctx.JSON(iris.Map{"code": config.ErrVerificationCode, "msg": config.ErrMsgs[config.ErrVerificationCode]})
-			case "1":
-				println("code已过期")
-				ctx.JSON(iris.Map{"code": config.ErrExpireCode, "msg": config.ErrMsgs[config.ErrExpireCode]})
-			default:
-				println("code其他错误")
-				ctx.JSON(iris.Map{"code": config.ErrVerificationCode, "msg": config.ErrMsgs[config.ErrVerificationCode]})
+				if allData["ticket"] == "" {
+					errTxt = "验证令牌ticket不能为空"
+				}
 			}
 
-			return
+			println("ticket", allData["ticket"])
+
+			// 判断是否存在字段 "code"
+			if _, ok := allData["code"]; !ok {
+				errTxt = "验证码code不能为空"
+			} else {
+				if allData["code"] == "" {
+					errTxt = "验证码code不能为空"
+				}
+			}
+			if errTxt != "" {
+				if env != "" {
+					println("errTxt Error: ", errTxt)
+					ctx.JSON(iris.Map{"code": config.ErrParamEmpty, "msg": config.ErrMsgs[config.ErrParamEmpty], "_debug_carry": allData, "_debug_err": errTxt})
+				} else {
+					ctx.JSON(iris.Map{"code": config.ErrParamEmpty, "msg": config.ErrMsgs[config.ErrParamEmpty]})
+
+				}
+				return
+			}
+			ticket := allData["ticket"].(string)
+			code := allData["code"].(string)
+			ua := ctx.GetHeader("User-Agent")                                     // 拿到UA信息User-Agent
+			secret := username + otherCfg["SERV_KEY_SECRET"].(string) + code + ua // 验证码的特殊密钥
+
+			println(ticket, code, secret)
+
+			// 进行 Basic Auth 身份认证
+			temp_uid, err := utils.VerifyToken(ticket, secret)
+			if err != nil {
+				println("VerifyTicket Error: ", err.Error())
+				ctx.StatusCode(iris.StatusUnauthorized)
+
+				switch err.Error() {
+				case "0":
+					println("code无效")
+					ctx.JSON(iris.Map{"code": config.ErrVerificationCode, "msg": config.ErrMsgs[config.ErrVerificationCode]})
+				case "1":
+					println("code已过期")
+					ctx.JSON(iris.Map{"code": config.ErrExpireCode, "msg": config.ErrMsgs[config.ErrExpireCode]})
+				default:
+					println("code其他错误")
+					ctx.JSON(iris.Map{"code": config.ErrVerificationCode, "msg": config.ErrMsgs[config.ErrVerificationCode]})
+				}
+
+				return
+			}
+
+			println("验证通过为0的虚拟ID", temp_uid) // 继续往下执行
+
 		}
 
-		println("验证通过为0的虚拟ID", temp_uid) // 继续往下执行
+	}
+
+	// 如果是管理添加的用户
+	if isAdmin {
+		allData["inviter"] = tkUid     //邀请者UID
+		allData["referer"] = "管理员后台添加" //用户来源
 	}
 
 	// 调取创建用户模型 - 返回新插入数据的id
@@ -451,7 +464,8 @@ func (c *UserController) Post() {
 	// ctx.StatusCode(iris.StatusOK)
 	// ctx.JSON(iris.Map{"data": uid, "code": 0, "msg": ""})
 
-	if isCheck {
+	// 如果开启验证 并且 不是管理 返回登录信息
+	if isCheck && !isAdmin {
 		// 返回登录信息
 		// 获取用户信息
 		user, err := c.Models.Read(uid)
@@ -530,7 +544,7 @@ func (c *UserController) Post() {
 	}
 }
 
-// 用户信息 GET:/user/{uid}
+// 用户信息 GET:/user/{uid}/
 func (c *UserController) GetBy(id int64) {
 	ctx := c.CTX
 	env := ctx.Values().GetString("ENV")
@@ -792,6 +806,25 @@ func (c *UserController) PutByMaterial(id int64) {
 		return
 	}
 
+	ua := ctx.GetHeader("User-Agent") // 拿到UA信息User-Agent
+
+	// 操作写入日志表
+	logData := map[string]interface{}{
+		"uid":    id,
+		"action": "material",
+		"note":   utils.SerializeJSON(allData),
+		"actip":  utils.GetRealIP(ctx),
+		"ua":     ua,
+	}
+	log := c.Models.SetLogs(logData)
+	if log != nil {
+		if env != "" {
+			println("Models.SetLogs Error: ", log.Error())
+			ctx.JSON(iris.Map{"data": row, "code": 0, "msg": "操作成功但日志记录失败", "_debug_carry": logData, "_debug_err": err.Error()})
+			return
+		}
+	}
+
 	ctx.JSON(iris.Map{"data": row, "code": 0, "msg": ""})
 }
 
@@ -916,7 +949,7 @@ func (c *UserController) PatchBy(id int64) {
 	log := c.Models.SetLogs(logData)
 	if log != nil {
 		if env != "" {
-			println("Models.SetLogs Error: ", err.Error())
+			println("Models.SetLogs Error: ", log.Error())
 			ctx.JSON(iris.Map{"data": key, "code": 0, "msg": "操作成功但日志记录失败", "_debug_carry": logData, "_debug_err": err.Error()})
 			return
 		}
@@ -1152,7 +1185,7 @@ func (c *UserController) PostLogin() {
 	log := c.Models.SetLogs(logData)
 	if log != nil {
 		if env != "" {
-			println("Models.SetLogs Error: ", err.Error())
+			println("Models.SetLogs Error: ", log.Error())
 			ctx.JSON(iris.Map{"data": result, "code": 0, "msg": "操作成功但日志记录失败", "_debug_carry": logData, "_debug_err": err.Error()})
 			return
 		}
@@ -1476,7 +1509,7 @@ func (c *UserController) PostPassword() {
 	log := c.Models.SetLogs(logData)
 	if log != nil {
 		if env != "" {
-			println("Models.SetLogs Error: ", err.Error())
+			println("Models.SetLogs Error: ", log.Error())
 			ctx.JSON(iris.Map{"code": 0, "msg": "操作成功但日志记录失败", "_debug_carry": logData, "_debug_err": err.Error()})
 			return
 		}
