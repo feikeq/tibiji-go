@@ -260,7 +260,7 @@ func (c *AccountController) GetMonth() {
 	ctx.JSON(iris.Map{"data": monthList, "code": 0, "msg": ""})
 }
 
-// 帐单日历 GET:/account/calendar
+// 帐单日历 GET:/account/calendar/
 func (c *AccountController) GetCalendar() {
 	ctx := c.CTX
 	env := ctx.Values().GetString("ENV")
@@ -314,7 +314,7 @@ func (c *AccountController) DeleteBy(id int64) {
 	ctx.JSON(iris.Map{"data": row, "code": 0, "msg": ""})
 }
 
-// 收支比例 GET:/account/report/ratio
+// 收支比例 GET:/account/report/ratio/
 func (c *AccountController) GetReportRatio() {
 	ctx := c.CTX
 	env := ctx.Values().GetString("ENV")
@@ -379,7 +379,7 @@ func (c *AccountController) GetReportRatio() {
 	ctx.JSON(iris.Map{"data": row, "code": 0, "msg": ""})
 }
 
-// 收支列表 ( 近一年或半年的统计 ) GET:/account/report/ratios
+// 近年统计 - 收支列表 ( 近一年或半年的统计 ) GET:/account/report/ratios/
 func (c *AccountController) GetReportRatios() {
 	ctx := c.CTX
 	env := ctx.Values().GetString("ENV")
@@ -415,7 +415,7 @@ func (c *AccountController) GetReportRatios() {
 	ctx.JSON(iris.Map{"data": row, "code": 0, "msg": ""})
 }
 
-// 收支明细 GET:/account/report/details
+// 收支明细 GET:/account/report/details/
 func (c *AccountController) GetReportDetails() {
 	ctx := c.CTX
 	env := ctx.Values().GetString("ENV")
@@ -464,7 +464,7 @@ func (c *AccountController) GetReportDetails() {
 	ctx.JSON(iris.Map{"data": row, "code": 0, "msg": ""})
 }
 
-// 流水账户 GET:/account/report/accounts
+// 流水账户 GET:/account/report/accounts/
 func (c *AccountController) GetReportAccounts() {
 	ctx := c.CTX
 	env := ctx.Values().GetString("ENV")

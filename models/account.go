@@ -493,6 +493,7 @@ func (m *AccountModel) Calendar(uid int64) ([]AccountCalendar, error) {
 	sql += "GROUP BY YEAR(btime), MONTH(btime) ORDER BY 'year', 'month';"
 	// println(sql)
 	// println(m.TableName, id)
+	// inc 收入 、out 支出 、 oth 其它 ，oth是item项目除了“收入”和“支出”以外的其它所有类型
 
 	var data []AccountCalendar
 	err := m.DB.Select(&data, sql, uid) // 查询多行数据
