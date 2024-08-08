@@ -530,7 +530,7 @@ func (c *UserController) Post() {
 		if log != nil {
 			if env != "" {
 				println("Models.SetLogs Error: ", log.Error())
-				ctx.JSON(iris.Map{"data": result, "code": 0, "msg": "操作成功但日志记录失败", "_debug_carry": logData, "_debug_err": err.Error()})
+				ctx.JSON(iris.Map{"data": result, "code": 0, "msg": "操作成功但日志记录失败", "_debug_carry": logData, "_debug_err": log.Error()})
 				return
 			}
 		}
@@ -726,7 +726,7 @@ func (c *UserController) DeleteBy(id int64) {
 	ctx.JSON(iris.Map{"data": row, "code": 0, "msg": ""})
 }
 
-// 获取附属资料 GET:/user/{uid}/material
+// 获取附属资料 GET:/user/{uid}/material/
 func (c *UserController) GetByMaterial(id int64) {
 	ctx := c.CTX
 	env := ctx.Values().GetString("ENV")
@@ -752,7 +752,7 @@ func (c *UserController) GetByMaterial(id int64) {
 	// allData := utils.AllDataToMap(ctx)
 	// fmt.Printf("allData: %+v\n", allData) // 打印allData
 
-	// 调取模型 - 根据ID读取数据库中的信息
+	// 获取附属资料调取模型 - 根据ID读取数据库中的信息
 	material, err := c.Models.ReadMaterial(id)
 	if err != nil {
 		if env != "" {
@@ -794,7 +794,7 @@ func (c *UserController) PutByMaterial(id int64) {
 	allData := utils.AllDataToMap(ctx)
 	fmt.Printf("allData: %+v\n", allData) // 打印allData
 
-	// 调取模型 - 根据ID更新数据库中的信息
+	// 更新用户附属资料表调取模型 - 根据ID更新数据库中的信息
 	row, err := c.Models.UpdateMaterial(id, allData)
 	if err != nil {
 		if env != "" {
@@ -820,7 +820,7 @@ func (c *UserController) PutByMaterial(id int64) {
 	if log != nil {
 		if env != "" {
 			println("Models.SetLogs Error: ", log.Error())
-			ctx.JSON(iris.Map{"data": row, "code": 0, "msg": "操作成功但日志记录失败", "_debug_carry": logData, "_debug_err": err.Error()})
+			ctx.JSON(iris.Map{"data": row, "code": 0, "msg": "操作成功但日志记录失败", "_debug_carry": logData, "_debug_err": log.Error()})
 			return
 		}
 	}
@@ -950,7 +950,7 @@ func (c *UserController) PatchBy(id int64) {
 	if log != nil {
 		if env != "" {
 			println("Models.SetLogs Error: ", log.Error())
-			ctx.JSON(iris.Map{"data": key, "code": 0, "msg": "操作成功但日志记录失败", "_debug_carry": logData, "_debug_err": err.Error()})
+			ctx.JSON(iris.Map{"data": key, "code": 0, "msg": "操作成功但日志记录失败", "_debug_carry": logData, "_debug_err": log.Error()})
 			return
 		}
 	}
@@ -1186,7 +1186,7 @@ func (c *UserController) PostLogin() {
 	if log != nil {
 		if env != "" {
 			println("Models.SetLogs Error: ", log.Error())
-			ctx.JSON(iris.Map{"data": result, "code": 0, "msg": "操作成功但日志记录失败", "_debug_carry": logData, "_debug_err": err.Error()})
+			ctx.JSON(iris.Map{"data": result, "code": 0, "msg": "操作成功但日志记录失败", "_debug_carry": logData, "_debug_err": log.Error()})
 			return
 		}
 	}
@@ -1510,7 +1510,7 @@ func (c *UserController) PostPassword() {
 	if log != nil {
 		if env != "" {
 			println("Models.SetLogs Error: ", log.Error())
-			ctx.JSON(iris.Map{"code": 0, "msg": "操作成功但日志记录失败", "_debug_carry": logData, "_debug_err": err.Error()})
+			ctx.JSON(iris.Map{"code": 0, "msg": "操作成功但日志记录失败", "_debug_carry": logData, "_debug_err": log.Error()})
 			return
 		}
 	}

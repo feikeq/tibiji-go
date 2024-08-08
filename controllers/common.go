@@ -254,6 +254,7 @@ func (c *CommonController) GetTestmsg(ctx iris.Context) {
 		lunar := [2]string{"公历", "农历"}
 		bless := [2]string{"可别忘了祝福哦", "可别忘了哦"}
 
+		// 在go语言里使用fmt.Sprintf拼接字符串字段
 		subject := fmt.Sprintf("[%s%s提醒]%s%s%s%s%s", smtpName, stra[1], days[0], "刘德华", "60", strb[1], stra[1])
 		body := fmt.Sprintf("尊敬的%s用户 %s 您好：<br/>\r\n", smtpName, "username")
 		body += fmt.Sprintf("%s是 %s 的%s%s%s%s(%s)，", "03月08日", "刘德华", "60", strb[1], lunar[0], stra[1], "2020-01-02")

@@ -76,6 +76,8 @@ func main() {
 
 	// // println("cfg:::", cfg) // println 函数不支持直接使用 %T 和 %v 来格式化输出
 	// fmt.Printf("变量类型type: %T, 变量的值value: %v\n", cfg, cfg)
+	// fmt.Println 是 fmt 包中的一个函数。fmt 包提供格式化的输入和输出功能。
+	// println 是一个内置的函数，不属于任何包。
 	// println("otherCfg[\"SERV_NAME\"]:", otherCfg["SERV_NAME"].(string))
 	// println("addr:", addr)
 

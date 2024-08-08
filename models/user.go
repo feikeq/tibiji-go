@@ -530,7 +530,7 @@ func (m *UserModel) List(filters map[string]interface{}, pageNumber, pageSize in
 	return infos, total, nil
 }
 
-// 根据用户ID获取用户附属资料表
+// 获取附属资料 - 根据用户ID获取用户附属资料表
 func (m *UserModel) ReadMaterial(uid int64) (UserMaterial, error) {
 	// SQL注入问题：我们任何时候都不应该自己拼接SQL语句！
 
@@ -901,7 +901,7 @@ func (m *UserModel) GenerateUserClan(uid int64) []string {
 // 判断是否是管理员
 func (m *UserModel) IsAdmin(uid int64) bool {
 	// println("====IsAdmin===")
-	// 调取模型
+	// 获取附属资料调取模型
 	material, err := m.ReadMaterial(uid)
 	if err != nil {
 		println("m.ReadMaterial Error: ", err.Error())
@@ -916,7 +916,7 @@ func (m *UserModel) IsAdmin(uid int64) bool {
 // 获取管理员权限极别
 func (m *UserModel) AdminLive(uid int64) int {
 	// println("====AdminLive===")
-	// 调取模型
+	// 获取附属资料调取模型
 	material, err := m.ReadMaterial(uid)
 	if err != nil {
 		println("m.ReadMaterial Error: ", err.Error())
@@ -931,7 +931,7 @@ func (m *UserModel) AdminLive(uid int64) int {
 // 是否是VIP并返回级别
 func (m *UserModel) IsVip(uid int64) (int, error) {
 	// println("====IsVip===")
-	// 调取模型
+	// 获取附属资料调取模型
 	material, err := m.ReadMaterial(uid)
 	if err != nil {
 		println("m.ReadMaterial Error: ", err.Error())

@@ -247,7 +247,7 @@ func (c *OauthController) Post() {
 		if log != nil {
 			if env != "" {
 				println("Models.SetLogs Error: ", log.Error())
-				ctx.JSON(iris.Map{"data": result, "code": 0, "msg": "操作成功但日志记录失败", "_debug_carry": logData, "_debug_err": err.Error()})
+				ctx.JSON(iris.Map{"data": result, "code": 0, "msg": "操作成功但日志记录失败", "_debug_carry": logData, "_debug_err": log.Error()})
 				return
 			}
 		}
@@ -337,7 +337,7 @@ func (c *OauthController) Put() {
 	if log != nil {
 		if env != "" {
 			println("Models.SetLogs Error: ", log.Error())
-			ctx.JSON(iris.Map{"data": row, "code": 0, "msg": "操作成功但日志记录失败", "_debug_carry": logData, "_debug_err": err.Error()})
+			ctx.JSON(iris.Map{"data": row, "code": 0, "msg": "操作成功但日志记录失败", "_debug_carry": logData, "_debug_err": log.Error()})
 			return
 		}
 	}
@@ -421,7 +421,7 @@ func (c *OauthController) Delete() {
 	if log != nil {
 		if env != "" {
 			println("Models.SetLogs Error: ", log.Error())
-			ctx.JSON(iris.Map{"data": row, "code": 0, "msg": "操作成功但日志记录失败", "_debug_carry": logData, "_debug_err": err.Error()})
+			ctx.JSON(iris.Map{"data": row, "code": 0, "msg": "操作成功但日志记录失败", "_debug_carry": logData, "_debug_err": log.Error()})
 			return
 		}
 	}

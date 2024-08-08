@@ -100,7 +100,7 @@ func (c *ContactController) Get() {
 	ctx.JSON(iris.Map{"data": data, "code": total, "msg": ""})
 }
 
-// 添加联系人 POST:/contact
+// 添加联系人 POST:/contact/
 func (c *ContactController) Post() {
 	ctx := c.CTX
 	env := ctx.Values().GetString("ENV")
@@ -147,7 +147,7 @@ func (c *ContactController) Post() {
 	ctx.JSON(iris.Map{"data": cid, "code": 0, "msg": ""})
 }
 
-// 修改联系人  PUT:/contact/{cid}
+// 修改联系人  PUT:/contact/{cid}/
 func (c *ContactController) PutBy(id int64) {
 	ctx := c.CTX
 	env := ctx.Values().GetString("ENV")
@@ -174,7 +174,7 @@ func (c *ContactController) PutBy(id int64) {
 
 	// 只能修改自己添加的联系人，因为更新条件会自带带当前用户ID
 
-	// 调取模型 - 根据ID更新数据库中的信息
+	// 修改联系人修改联系人调取模型 - 根据ID更新数据库中的信息
 	row, err := c.Models.Update(tkUid, id, allData)
 	if err != nil {
 		if env != "" {
@@ -384,7 +384,7 @@ func (c *ContactController) GetBy(cid int64) {
 		println("---------------------------------------------------------")
 	}
 
-	// 调取模型 - 根据ID更新数据库中的信息
+	// 获取联系人调取模型 - 根据ID更新数据库中的信息
 	row, err := c.Models.Read(cid)
 	if err != nil {
 		if env != "" {
@@ -410,7 +410,7 @@ func (c *ContactController) GetBy(cid int64) {
 	ctx.JSON(iris.Map{"data": row, "code": 0, "msg": ""})
 }
 
-// 绑定联系人  PATCH:/contact/   - 绑定用户资料和附属资料到联系人
+// 关联联系人  PATCH:/contact/   - 绑定用户资料和附属资料到联系人
 func (c *ContactController) Patch() {
 	ctx := c.CTX
 	env := ctx.Values().GetString("ENV")
@@ -422,6 +422,24 @@ func (c *ContactController) Patch() {
 		println(ctx.GetCurrentRoute().MainHandlerName() + " [" + ctx.GetCurrentRoute().Path() + "] " + ctx.Method())
 		println("---------------------------------------------------------")
 	}
+
+	// 获取附属资料调取模型 - 根据ID读取数据库中的信息
+	material, err := c.UserModels.ReadMaterial(tkUid)
+	if err != nil {
+		if env != "" {
+			println("Models.ReadMaterial Error: ", err.Error())
+			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase], "_debug_carry": tkUid, "_debug_err": err.Error()})
+		} else {
+			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase]})
+		}
+		return
+	}
+
+	// 使用 fmt.Println 打印结构体数据
+	fmt.Println(material)
+
+	var bindCid = material.CID
+	println("bindCid：", bindCid)
 
 	// 读取用户资料
 	user, err := c.UserModels.Read(tkUid)
@@ -437,24 +455,176 @@ func (c *ContactController) Patch() {
 
 	// 拿所有提交数据
 	allData := utils.AllDataToMap(ctx)
+	if *user.NickName != "" {
+		allData["nickname"] = *user.NickName
+	}
+	if *user.Headimg != "" {
+		allData["picture"] = *user.Headimg
+	}
+	if *user.Sex != 0 {
+		allData["gender"] = *user.Sex
+	}
+	if *user.Birthday != "" {
+		allData["birthday"] = *user.Birthday
+	}
+	if *user.Company != "" {
+		allData["company"] = *user.Company
+	}
+	if *user.Address != "" {
+		allData["address"] = *user.Address
+	}
+	if *user.FName != "" {
+		allData["fullname"] = *user.FName
+	}
+	if *user.UserName != "" {
+		allData["note"] = *user.UserName
+	}
+	if *user.Email != "" {
+		// 在go语言里可直接使用+号拼接字符串字段
+		allData["mail"] = "EMAIL::" + *user.Email
+	}
+	if *user.Cell != "" {
+		allData["phone"] = "TEL::" + *user.Cell
+	}
 
 	// 添加用户ID
 	allData["uid"] = tkUid
 	// fmt.Printf("变量类型type: %T, 变量的值value: %v\n", allData, allData)
 
-	// 调取创建用户模型 - 返回新插入数据的id
-	cid, err := c.Models.Create(allData)
-	if err != nil {
-		if env != "" {
-			println("Models.Create Error: ", err.Error())
-			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase], "_debug_carry": user, "_debug_err": err.Error()})
-		} else {
-			ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase]})
+	fmt.Printf("allData: %+v\n", allData) // 打印allData
+	// 如果没有绑定联系人卡片
+	if bindCid == 0 {
+
+		// 调取创建用户模型 - 返回新插入数据的id
+		cid, err := c.Models.Create(allData)
+		if err != nil {
+			if env != "" {
+				println("Models.Create Error: ", err.Error())
+				ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase], "_debug_carry": user, "_debug_err": err.Error()})
+			} else {
+				ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase]})
+			}
+			return
 		}
-		return
+		bindCid = cid
+
+		upData := map[string]interface{}{
+			"cid":    bindCid,
+			"remark": "通过绑定联系人添加cid",
+		}
+
+		// 更新用户附属资料表调取模型 - 根据ID更新数据库中的信息
+		row, err := c.UserModels.UpdateMaterial(tkUid, upData)
+		if err != nil {
+			if env != "" {
+				println("Models.UpdateMaterial Error: ", err.Error())
+				ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase], "_debug_carry": allData, "_debug_err": err.Error()})
+			} else {
+				ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase]})
+			}
+			return
+		}
+
+		if row == 0 {
+			ctx.JSON(iris.Map{"code": config.ErrResExists, "msg": config.ErrMsgs[config.ErrResExists]})
+			return
+		}
+
+	} else {
+
+		// 获取联系人调取模型 - 根据ID更新数据库中的信息
+		row, err := c.Models.Read(bindCid)
+		if err != nil {
+			if env != "" {
+				println("Models.Update Error: ", err.Error())
+				ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase], "_debug_carry": tkUid, "_debug_err": err.Error()})
+			} else {
+				ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase]})
+			}
+			return
+		}
+
+		// 如果不是本人的联系人
+		if row.UID != tkUid {
+			// 获取联系人功能必须是自己创建的才可以，管理员也无没权获取他人联系人
+			ctx.JSON(iris.Map{"code": config.ErrUnauthorized, "msg": config.ErrMsgs[config.ErrUnauthorized]})
+			return
+		}
+
+		// 删除已存在的字段
+
+		if row.NickName != "" {
+			delete(allData, "nickname")
+		}
+		if row.Picture != "" {
+			delete(allData, "picture")
+		}
+		if row.Gender != 0 {
+			delete(allData, "gender")
+		}
+		if row.Birthday != "" {
+			delete(allData, "birthday")
+		}
+		if row.Company != "" {
+			delete(allData, "company")
+		}
+		if row.Address != "" {
+			delete(allData, "address")
+		}
+		if row.Fullname != "" {
+			delete(allData, "fullname")
+		}
+		if row.Note != "" {
+			delete(allData, "note")
+		}
+		if row.Mail != "" {
+			delete(allData, "mail")
+		}
+		if row.Phone != "" {
+			delete(allData, "phone")
+		}
+
+		delete(allData, "uid")    // 删除 用户ID
+		delete(allData, "cid")    // 删除 CID
+		delete(allData, "intime") // 删除 创建时间
+		// 权限不够则删除
+		delete(allData, "state") //  删除状态（管理员也不能修改）
+
+		// 只能修改自己添加的联系人，因为更新条件会自带带当前用户ID
+
+		// 调取模型 - 根据ID更新数据库中的信息
+		_, uperr := c.Models.Update(tkUid, bindCid, allData)
+		if uperr != nil {
+			if env != "" {
+				println("Models.Update Error: ", uperr.Error())
+				ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase], "_debug_carry": allData, "_debug_err": uperr.Error()})
+			} else {
+				ctx.JSON(iris.Map{"code": config.ErrDatabase, "msg": config.ErrMsgs[config.ErrDatabase]})
+			}
+			return
+		}
+
+	}
+
+	// 操作写入日志表
+	ua := ctx.GetHeader("User-Agent") // 拿到UA信息User-Agent
+	logData := map[string]interface{}{
+		"uid":    tkUid,
+		"action": "correlated",
+		"note":   "contact",
+		"actip":  utils.GetRealIP(ctx),
+		"ua":     ua,
+	}
+	log := c.UserModels.SetLogs(logData)
+	if log != nil {
+		if env != "" {
+			println("Models.SetLogs Error: ", log.Error())
+			ctx.JSON(iris.Map{"data": bindCid, "code": 0, "msg": "操作成功但日志记录失败", "_debug_carry": logData, "_debug_err": log.Error()})
+			return
+		}
 	}
 
 	// 返回成功响应
-	ctx.JSON(iris.Map{"data": cid, "code": 0, "msg": ""})
+	ctx.JSON(iris.Map{"data": bindCid, "code": 0, "msg": ""})
 
 }
