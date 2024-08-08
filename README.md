@@ -79,11 +79,30 @@ go run main.go
 ```
 
 ## 🛰 编译部署
-不使用 go build 而使用名为build.sh的Shell脚本来进行编译
+不使用 go build 而使用名为 build.sh 的Shell脚本来进行编译
 ```sh
 chmod +x build.sh
 ./build.sh
 ```
+这将编译main.go并创建3名为tibiji-go的不同平台的可执行文件。
+将编译后的可执行文件上传到服务器，在服务器上你可以直接运行这个可执行文件，这里以Linux可执行文件示例：
+```sh
+chmod +x tibiji-go
+./tibiji-go
+```
+确保服务器上安装了Go语言环境，如果你的应用程序需要特定版本的Go，可以在源代码中设置go.mod文件指定版本。
+```sh
+go mod init tibiji-go
+go get
+go build -o tibiji-go
+```
+如要后台启动并使其常驻内存
+```sh
+ Windows ("start /b tibiji-go.exe")
+ Linux ("nohup ./tibiji-go &")
+ macOS ("nohup ./tibiji-go.mac &")
+```
+
 
 
 ## 🐬 数据割接
