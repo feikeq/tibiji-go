@@ -338,6 +338,26 @@ func (c *UserController) Post() {
 	allData := utils.AllDataToMap(ctx) // ctx.FormValues() 等同于 ctx.Request().Form
 	// fmt.Printf("allData: %+v\n", allData) // 打印allData
 
+	var errTxt = ""
+	// 判断是否存在字段 "username"
+	if _, ok := allData["username"]; !ok {
+		errTxt = "用户名username不能为空"
+	} else {
+		if allData["username"] == "" {
+			errTxt = "用户名username不能为空"
+		}
+	}
+
+	if errTxt != "" {
+		if env != "" {
+			println("errTxt Error: ", errTxt)
+			ctx.JSON(iris.Map{"code": config.ErrParamEmpty, "msg": config.ErrMsgs[config.ErrParamEmpty], "_debug_carry": allData, "_debug_err": errTxt})
+		} else {
+			ctx.JSON(iris.Map{"code": config.ErrParamEmpty, "msg": config.ErrMsgs[config.ErrParamEmpty]})
+		}
+		return
+	}
+
 	// 客户端IP地址
 	allData["regip"] = utils.GetRealIP(ctx)
 
